@@ -13,7 +13,7 @@
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3.2</div></header>
 <main>
 <div class="nav">
 <button class="active" onclick="show('dash',this)">🏠 ホーム</button>
@@ -89,9 +89,6 @@
 const KEY='ebayResearchV3';
 const SETTINGS_KEY='ebayResearchSettingsV3';
 const DOMAIN_KEY='ebayResearchDomainV3';
-function safeJSON(raw,fallback){try{return raw?JSON.parse(raw):fallback}catch(e){return fallback}}
-function safeGet(key,fallback){try{return safeJSON(localStorage.getItem(key),fallback)}catch(e){return fallback}}
-function safeSet(key,value){try{localStorage.setItem(key,value);return true}catch(e){return false}}
 const domains={
  motors:{icon:'🚗',name:'eBay Motors',desc:'車両・部品・適合・OEM',keywords:['Toyota OEM','Honda OEM','Nissan OEM','JDM parts','OEM part number','hard to find car parts']},
  carwash:{icon:'🧽',name:'洗車道具',desc:'洗車・ディテーリング用品',keywords:['Japanese detailing tools','car wash brush Japan','microfiber Japan','detailing accessories']},
@@ -104,20 +101,16 @@ const domains={
  misc:{icon:'📦',name:'その他・雑多',desc:'新分野のテスト用',keywords:['Made in Japan','Japanese made','Japan exclusive','Japanese quality']}
 };
 const defaultSettings={monthlyProfit:50000,capital:30000,costMax:3000,profitMin:1000,profitIdeal:2000,shipMax:30,smallStock:30,otherStock:10};
-let settings={...defaultSettings,...safeGet(SETTINGS_KEY,{})};
-let currentDomain='motors';
-try{currentDomain=localStorage.getItem(DOMAIN_KEY)||'motors'}catch(e){}
-if(!domains[currentDomain])currentDomain='motors';
-let oldData=safeGet('ebayResearchV2',safeGet('ebayResearchV1',[]));
-if(!Array.isArray(oldData))oldData=[];
-let data=safeGet(KEY,null);
-if(!Array.isArray(data))data=null;
+let settings={...defaultSettings,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')};
+let currentDomain=localStorage.getItem(DOMAIN_KEY)||'motors';
+let oldData=JSON.parse(localStorage.getItem('ebayResearchV2')||localStorage.getItem('ebayResearchV1')||'[]');
+let data=JSON.parse(localStorage.getItem(KEY)||'null');
 if(!data){data=oldData.map(o=>({...o,domain:o.domain||'misc',condition:o.condition||'新品',stockMode:o.stockMode||'在庫',sizeClass:o.sizeClass||'小型',returnRisk:o.returnRisk||'低',domainData:o.domainData||{},sources:o.sources||{},demandMemo:o.demandMemo||''}));persist();}
 const yen=n=>'¥'+Math.round(Number(n)||0).toLocaleString();
 function v(id){return document.getElementById(id)?.value??''}
 function domain(){return domains[currentDomain]||domains.misc}
-function persist(){safeSet(KEY,JSON.stringify(data))}
-function persistDomain(){safeSet(DOMAIN_KEY,currentDomain)}
+function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
+function persistDomain(){localStorage.setItem(DOMAIN_KEY,currentDomain)}
 function calc(o){const revenue=(+o.price||0)*(+o.fx||150),fee=revenue*(+o.fee||15)/100,profit=revenue-fee-(+o.cost||0)-(+o.shipping||0),roi=(+o.cost||0)>0?profit/(+o.cost)*100:0,str=(+o.active||0)>0?(+o.sold||0)/(+o.active)*100:0,breakEven=(+o.cost||0)+(+o.shipping||0),breakEvenUsd=(+o.fx||150)>0?breakEven/(1-(+o.fee||15)/100)/(+o.fx||150):0;return{revenue,fee,profit,roi,str,breakEvenUsd}}
 function decision(o,c){
  const reasons=[],good=[];
@@ -131,10 +124,54 @@ function decision(o,c){
  if(c.profit>0 && reasons.length<=2)return{label:'追加調査',cls:'yellow',reason:reasons.join('。')||'需要・送料・適合を追加確認'};
  return{label:'見送り',cls:'red',reason:reasons.join('。')||'現時点の条件では優先度が低め'};
 }
-function specialistChecks(o){const d=o.domainData||{},warn=[],good=[];if(o.domain==='motors'){if(!d.oem)warn.push('OEM/部品番号が未確認');else good.push('OEM番号');if(d.fitment==='不明')warn.push('適合が不明');else if(d.fitment)good.push('適合');}if(o.domain==='fishing'){if(!d.type)warn.push('釣具分類が未入力');if(d.danger==='要確認')warn.push('針・刃物等の配送確認が必要');else if(d.danger==='問題なし')good.push('配送確認');}return{warn,good}}
+function specialistChecks(o){
+ const d=o.domainData||{},warn=[],good=[];
+ if(o.domain==='motors'){
+   if(!d.vehicleMaker)warn.push('車両メーカーが未入力');
+   if(!d.model)warn.push('車種が未入力');
+   if(!d.year)warn.push('年式が未確認');
+   if(!d.oem)warn.push('OEM/部品番号が未確認');else good.push('OEM番号');
+   if(d.fitment==='不明'||d.fitment==='要確認')warn.push('適合確認が必要');else good.push('適合');
+   if(d.install==='要加工'||d.install==='専門取付')warn.push('取付条件に注意');
+   if(d.usMarket==='不明')warn.push('US市場での流通状況が不明');
+   if(d.usMarket==='25年ルール対象 / 予定')warn.push('25年ルールは部品販売と車両輸入を混同しない');
+ }
+ if(o.domain==='fishing'){
+   if(!d.type)warn.push('釣具分類が未入力');
+   if(d.danger==='要確認')warn.push('針・刃物等の配送確認が必要');
+   else if(d.danger==='問題なし')good.push('配送確認');
+ }
+ return{warn,good}
+}
 function calcCurrent(){return{domain:currentDomain,price:+v('price')||0,fx:+v('fx')||150,cost:+v('cost')||0,shipping:+v('shipping')||0,fee:+v('fee')||15,active:+v('active')||0,sold:+v('sold')||0,days:+v('days')||30,target:+v('target')||settings.profitMin,condition:v('condition'),stockMode:v('stockMode'),sizeClass:v('sizeClass'),returnRisk:v('returnRisk'),domainData:readDomainData()}}
 function domainFieldsHTML(key){
- if(key==='motors')return `<div class="section-title">🚗 Motors専門情報</div><div class="grid"><div class="field"><label>メーカー</label><input id="d_vehicleMaker" placeholder="Toyota"></div><div class="field"><label>車種</label><input id="d_model" placeholder="Camry"></div></div><div class="grid"><div class="field"><label>年式</label><input id="d_year" placeholder="2025-2026"></div><div class="field"><label>世代 / 型式</label><input id="d_generation" placeholder="9th Gen / 型式"></div></div><div class="grid"><div class="field"><label>部品分類</label><select id="d_partType"><option>整備・消耗品</option><option>板金・外装</option><option>内装</option><option>電装</option><option>アクセサリー</option><option>チューニング</option><option>その他</option></select></div><div class="field"><label>純正 / 社外</label><select id="d_oemType"><option>純正</option><option>社外</option><option>不明</option></select></div></div><div class="field"><label>OEM / Part Number</label><input id="d_oem" placeholder="例：85212-AQ010"></div><div class="grid"><div class="field"><label>適合確認</label><select id="d_fitment"><option>確認済み</option><option>要確認</option><option>不明</option></select></div><div class="field"><label>US市場</label><select id="d_usMarket"><option>US正規販売</option><option>US未正規/JDM</option><option>25年ルール対象/予定</option><option>不明</option></select></div></div>`;
+ if(key==='motors')return `<div class="section-title">🚗 Motors専門情報</div>
+<div class="grid">
+<div class="field"><label>メーカー</label><input id="d_vehicleMaker" placeholder="Toyota"></div>
+<div class="field"><label>車種</label><input id="d_model" placeholder="Camry"></div>
+</div>
+<div class="grid">
+<div class="field"><label>年式</label><input id="d_year" placeholder="2025-2026"></div>
+<div class="field"><label>世代 / 型式</label><input id="d_generation" placeholder="9th Gen / XV80"></div>
+</div>
+<div class="grid">
+<div class="field"><label>車両タイプ</label><select id="d_vehicleType"><option>乗用車</option><option>SUV / Crossover</option><option>Pickup / Truck</option><option>Van / Minivan</option><option>Sports / Coupe</option><option>JDM / その他</option></select></div>
+<div class="field"><label>部品分類</label><select id="d_partType"><option>整備・消耗品</option><option>板金・外装</option><option>内装</option><option>電装</option><option>アクセサリー</option><option>チューニング</option><option>その他</option></select></div>
+</div>
+<div class="grid">
+<div class="field"><label>純正 / 社外</label><select id="d_oemType"><option>純正</option><option>社外</option><option>リビルト</option><option>中古純正</option><option>不明</option></select></div>
+<div class="field"><label>取付位置</label><select id="d_position"><option>フロント</option><option>リア</option><option>左右</option><option>車内</option><option>エンジンルーム</option><option>その他</option></select></div>
+</div>
+<div class="field"><label>OEM / Part Number</label><input id="d_oem" placeholder="例：85212-AQ010"></div>
+<div class="grid">
+<div class="field"><label>適合確認</label><select id="d_fitment"><option>確認済み</option><option>要確認</option><option>不明</option></select></div>
+<div class="field"><label>US市場</label><select id="d_usMarket"><option>US正規販売</option><option>US未正規 / JDM</option><option>25年ルール対象 / 予定</option><option>不明</option></select></div>
+</div>
+<div class="grid">
+<div class="field"><label>左ハンドル / 右ハンドル</label><select id="d_steering"><option>共通</option><option>LHD</option><option>RHD</option><option>要確認</option></select></div>
+<div class="field"><label>取付・加工</label><select id="d_install"><option>ボルトオン</option><option>要加工</option><option>専門取付</option><option>不明</option></select></div>
+</div>
+<div class="field"><label>適合車両・注意点メモ</label><textarea id="d_fitmentMemo" placeholder="例：2025-2026 Camry XV80 / 米国仕様のみ確認済み"></textarea></div>`;
  if(key==='fishing')return `<div class="section-title">🎣 釣具専門情報</div><div class="grid"><div class="field"><label>分類</label><select id="d_type"><option>ルアー</option><option>フック・仕掛け</option><option>リール部品</option><option>ロッド周辺</option><option>ライン関連</option><option>小物・アクセサリー</option><option>工具・メンテ用品</option><option>その他</option></select></div><div class="field"><label>対象釣種</label><input id="d_style" placeholder="Bass / Trout / Saltwater"></div></div><div class="grid"><div class="field"><label>JDM / 日本限定性</label><select id="d_jdm"><option>高い</option><option>あり</option><option>共通品</option><option>不明</option></select></div><div class="field"><label>針・刃物等の配送</label><select id="d_danger"><option>問題なし</option><option>要確認</option></select></div></div><div class="field"><label>型番 / 品番</label><input id="d_modelNo" placeholder="メーカー型番"></div>`;
  const map={carwash:['用途','素材 / タイプ'],tools:['工具分類','型番 / 規格'],industrial:['産業分類','型番 / 規格'],beauty:['道具分類','素材 / 用途'],okinawa:['文化分類','地域 / 工芸'],culture:['文化分類','用途 / 由来'],misc:['分類','特徴']};
  const x=map[key]||map.misc;return `<div class="section-title">${domain().icon} ${domain().name}専門情報</div><div class="grid"><div class="field"><label>${x[0]}</label><input id="d_cat" placeholder="${x[0]}"></div><div class="field"><label>${x[1]}</label><input id="d_spec" placeholder="${x[1]}"></div></div><div class="field"><label>日本限定性 / 差別化ポイント</label><input id="d_unique" placeholder="日本製・限定・職人・規格など"></div>`;
@@ -155,13 +192,12 @@ function preview(){const el=document.getElementById('preview');if(!el)return;con
 function attachPreviewListeners(){document.querySelectorAll('#new input,#new textarea,#new select').forEach(x=>{x.removeEventListener('input',preview);x.addEventListener('input',preview);x.removeEventListener('change',preview);x.addEventListener('change',preview)})}
 function openSoldSearch(){const q=v('keyword')||v('name');if(!q){alert('eBay検索キーワードを入力してください');return}window.open('https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(q)+'&LH_Sold=1&LH_Complete=1','_blank')}
 function loadSettingsUI(){document.getElementById('setMonthlyProfit').value=settings.monthlyProfit;document.getElementById('setCapital').value=settings.capital;document.getElementById('setCostMax').value=settings.costMax;document.getElementById('setProfitMin').value=settings.profitMin;document.getElementById('setProfitIdeal').value=settings.profitIdeal;document.getElementById('setShipMax').value=settings.shipMax;document.getElementById('setSmallStock').value=settings.smallStock;document.getElementById('setOtherStock').value=settings.otherStock;document.getElementById('modeStage').textContent='Stage 1'}
-function saveSettings(){settings={monthlyProfit:+v('setMonthlyProfit')||50000,capital:+v('setCapital')||30000,costMax:+v('setCostMax')||3000,profitMin:+v('setProfitMin')||1000,profitIdeal:+v('setProfitIdeal')||2000,shipMax:+v('setShipMax')||30,smallStock:+v('setSmallStock')||30,otherStock:+v('setOtherStock')||10};safeSet(SETTINGS_KEY,JSON.stringify(settings));document.getElementById('target').value=settings.profitMin;alert('販売条件を保存しました');renderAll()}
+function saveSettings(){settings={monthlyProfit:+v('setMonthlyProfit')||50000,capital:+v('setCapital')||30000,costMax:+v('setCostMax')||3000,profitMin:+v('setProfitMin')||1000,profitIdeal:+v('setProfitIdeal')||2000,shipMax:+v('setShipMax')||30,smallStock:+v('setSmallStock')||30,otherStock:+v('setOtherStock')||10};localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));document.getElementById('target').value=settings.profitMin;alert('販売条件を保存しました');renderAll()}
 function exportData(){const payload={version:3,exportedAt:new Date().toISOString(),settings,currentDomain,data};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ebay-research-v3-backup.json';a.click()}
 function importData(){document.getElementById('file').click()}
-function loadFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(r.result);if(Array.isArray(obj)){data=obj.map(x=>({...x,domain:x.domain||'misc'}))}else{data=obj.data||[];settings={...defaultSettings,...(obj.settings||{})};currentDomain=obj.currentDomain||currentDomain;safeSet(SETTINGS_KEY,JSON.stringify(settings));persistDomain()}persist();renderAll();alert('読み込みました')}catch(err){alert('JSONファイルを読み込めません')}};r.readAsText(f)}
+function loadFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(r.result);if(Array.isArray(obj)){data=obj.map(x=>({...x,domain:x.domain||'misc'}))}else{data=obj.data||[];settings={...defaultSettings,...(obj.settings||{})};currentDomain=obj.currentDomain||currentDomain;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));persistDomain()}persist();renderAll();alert('読み込みました')}catch(err){alert('JSONファイルを読み込めません')}};r.readAsText(f)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 document.getElementById('target').value=settings.profitMin;attachPreviewListeners();renderAll();
-window.addEventListener('error',e=>{console.error(e.error||e.message)});
 </script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');</script>
 </body></html>
