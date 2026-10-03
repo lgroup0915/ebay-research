@@ -3,201 +3,233 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>eBay Research Hub</title>
-<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#111827">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<title>eBay Research Hub</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f5f6f8;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;color:#172033}header{background:#111827;color:#fff;padding:18px 16px 14px;position:sticky;top:0;z-index:5}header h1{margin:0;font-size:21px}.sub{opacity:.72;font-size:12px;margin-top:3px}main{max-width:760px;margin:auto;padding:14px 14px 100px}.nav{display:flex;gap:7px;overflow:auto;margin-bottom:14px}.nav button{border:0;background:#e5e7eb;border-radius:999px;padding:9px 13px;white-space:nowrap}.nav button.active{background:#111827;color:white}.card{background:white;border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 2px 10px #0000000b}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.domain-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.domain-btn{border:1px solid #e5e7eb;background:#fff;border-radius:14px;padding:14px 12px;text-align:left;font-size:14px;font-weight:700;min-height:72px}.domain-btn.active{border-color:#111827;background:#111827;color:#fff}.domain-btn span{display:block;font-size:11px;font-weight:500;opacity:.68;margin-top:4px}.modebar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#eef2ff;border-radius:12px;padding:10px 12px;margin:10px 0}.mode-name{font-weight:800}.pill{font-size:11px;border-radius:999px;background:#fff;padding:5px 8px;color:#3730a3}.section-title{font-size:14px;font-weight:800;margin:16px 0 8px;padding-top:4px;border-top:1px solid #edf0f3}label{font-size:12px;color:#667085;display:block;margin-bottom:4px}input,textarea,select{width:100%;border:1px solid #d7dce3;border-radius:10px;padding:11px;font-size:15px;background:#fff}textarea{min-height:72px;resize:vertical}.field{margin-bottom:10px}button.primary{width:100%;border:0;background:#2563eb;color:white;border-radius:11px;padding:12px;font-size:15px;font-weight:700}button.secondary{border:0;background:#eef2f7;border-radius:10px;padding:10px 12px}.stat{background:#f8fafc;border-radius:11px;padding:11px}.stat b{font-size:18px;display:block;margin-top:3px}.green{color:#15803d}.yellow{color:#a16207}.red{color:#b91c1c}.muted{color:#667085;font-size:12px}.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.tag{display:inline-block;font-size:11px;border-radius:999px;background:#eef2ff;padding:4px 8px;color:#3730a3;margin:2px}.hidden{display:none!important}.item{border-top:1px solid #edf0f3;padding:12px 0}.item:first-child{border-top:0}.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:10px 14px;display:flex;gap:8px;z-index:9}.bottom button{flex:1}.small{font-size:12px}.decision{border-radius:12px;padding:12px;background:#f8fafc;margin-top:10px}.decision strong{font-size:16px}.stage{background:#f8fafc;border:1px solid #edf0f3;border-radius:13px;padding:12px}.checks{display:grid;grid-template-columns:1fr 1fr;gap:7px}.check{background:#f8fafc;border-radius:9px;padding:8px;font-size:12px}.domain-note{font-size:12px;color:#667085;margin-top:5px}.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.quick-actions button{min-height:46px}.source-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.source-toggle{display:flex;align-items:center;gap:7px;background:#f8fafc;padding:9px;border-radius:10px;font-size:12px}.source-toggle input{width:auto}.badge{font-size:11px;border-radius:999px;padding:4px 8px;background:#f3f4f6}.settings-note{font-size:12px;line-height:1.6;color:#667085}@media(max-width:430px){.grid3{grid-template-columns:repeat(3,1fr)}.stat{padding:9px}.stat b{font-size:16px}}
+*{box-sizing:border-box}body{margin:0;background:#f5f6f8;color:#172033;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
+header{background:#111827;color:#fff;padding:22px 24px 18px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:27px}header .sub{margin-top:5px;color:#cbd5e1;font-size:14px}
+main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.nav button{border:0;border-radius:22px;padding:13px 17px;background:#e5e7eb;font-size:15px;white-space:nowrap}.nav .active{background:#111827;color:#fff}
+.card{background:#fff;border-radius:22px;padding:20px;margin:14px 0;box-shadow:0 2px 10px #00000008}.card h2{margin:0 0 14px;font-size:22px}.card h3{margin:0 0 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:11px}.field.full{grid-column:1/-1}.field label{display:block;font-size:13px;color:#667085;margin:0 0 5px}.field input,.field select,.field textarea{width:100%;border:1px solid #d7dbe3;border-radius:14px;padding:13px 14px;font-size:16px;background:#fff}.field textarea{min-height:85px;resize:vertical}
+.mode{background:#eef2ff;border-radius:18px;padding:15px;margin-bottom:14px}.mode strong{font-size:18px}.small{font-size:13px;color:#667085}.sectionTitle{font-weight:800;font-size:18px;margin:20px 0 10px}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}.btn{border:0;border-radius:15px;padding:14px;font-size:16px;font-weight:700}.primary{background:#2563eb;color:#fff}.secondary{background:#eef2f7;color:#172033}
+.result{border-radius:18px;padding:16px;margin-top:14px;background:#f8fafc}.result.go{background:#ecfdf3}.result.keep{background:#fffbeb}.result.stop{background:#fef2f2}.result h2{margin:0 0 6px}
+.badge{display:inline-block;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px;background:#fff}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}.metric{background:#f8fafc;border-radius:14px;padding:12px}.metric b{display:block;font-size:19px;margin-top:4px}.metric span{font-size:12px;color:#667085}
+.specialties{display:grid;grid-template-columns:1fr 1fr;gap:10px}.specialty{border:1px solid #e1e5ec;background:#fff;border-radius:16px;padding:14px;text-align:left;font-size:15px}.specialty.active{border:2px solid #2563eb;background:#eff6ff}
+.keyword{display:inline-block;background:#eef2ff;color:#334155;border-radius:999px;padding:7px 10px;margin:4px;font-size:13px}
+.hidden{display:none!important}.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:9px 14px;border-top:1px solid #ddd;display:flex;gap:10px;z-index:10}.bottom button{flex:1;border:0;border-radius:14px;padding:13px;font-weight:700;background:#eef2f7}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.metrics{grid-template-columns:1fr 1fr}.specialties{grid-template-columns:1fr}.btnrow{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3.2</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3.3</div></header>
 <main>
 <div class="nav">
-<button class="active" onclick="show('dash',this)">🏠 ホーム</button>
-<button onclick="show('new',this)">➕ 登録</button>
-<button onclick="show('quick',this)">⏱ 5分</button>
-<button onclick="show('list',this)">📋 履歴</button>
-<button onclick="show('settings',this)">⚙️ 設定</button>
+<button class="active" onclick="showPage('home',this)">🏠 ホーム</button>
+<button onclick="showPage('register',this)">➕ 登録</button>
+<button onclick="showPage('quick',this)">⏱ 5分</button>
+<button onclick="showPage('history',this)">📋 履歴</button>
+<button onclick="showPage('settings',this)">⚙️ 設定</button>
 </div>
 
-<section id="dash">
+<section id="home">
 <div class="card">
-<div class="row"><h2 style="margin:0">🔎 専門分野</h2><span class="badge">タップで切替</span></div>
-<p class="muted">分野を選ぶと、登録項目・検索キーワード・判定の専門項目が切り替わります。</p>
-<div id="domainGrid" class="domain-grid"></div>
+<h2>🔎 専門分野</h2>
+<div class="small">分野を選ぶと、判定基準・検索キーワード・登録項目が切り替わります。</div>
+<div class="mode" style="margin-top:14px">現在のモード：<br><strong id="homeMode">🚗 eBay Motors</strong></div>
+<div class="specialties" id="specialties"></div>
 </div>
-<div class="modebar"><div><div class="muted">現在のモード</div><div id="modeName" class="mode-name">🚗 eBay Motors</div></div><span id="modeStage" class="pill">Stage 1</span></div>
-<div class="card"><h2 style="margin:0 0 12px">今日のリサーチ</h2><div class="grid3"><div class="stat"><span class="muted">商品</span><b id="count">0</b></div><div class="stat"><span class="muted">候補</span><b id="candidate">0</b></div><div class="stat"><span class="muted">平均利益</span><b id="avgprofit">¥0</b></div></div></div>
-<div class="card"><div class="row"><h3 style="margin:0">⭐ 仕入れ候補</h3><button class="secondary small" onclick="show('list')">全部見る</button></div><div id="top"></div></div>
-<div class="card"><h3 style="margin-top:0">🔎 この分野の保存キーワード</h3><div id="keywordTags"></div></div>
-</section>
-
-<section id="new" class="hidden">
-<div class="modebar"><div><div class="muted">登録分野</div><div id="newModeName" class="mode-name"></div></div><button class="secondary small" onclick="show('dash')">分野変更</button></div>
 <div class="card">
-<h2 style="margin-top:0">商品を登録</h2>
-<div class="field"><label>商品名</label><input id="name" placeholder="商品名"></div>
-<div class="grid"><div class="field"><label>eBay検索キーワード</label><input id="keyword" placeholder="英語検索ワード"></div><div class="field"><label>メーカー / ブランド</label><input id="maker" placeholder="メーカー"></div></div>
-<div id="domainFields"></div>
-<div class="section-title">📊 eBayデータ</div>
-<div class="grid"><div class="field"><label>Sold数（調査期間）</label><input id="sold" type="number" inputmode="numeric" value="0" min="0"></div><div class="field"><label>現在出品数</label><input id="active" type="number" inputmode="numeric" value="0" min="0"></div></div>
-<div class="grid"><div class="field"><label>調査期間（日）</label><input id="days" type="number" inputmode="numeric" value="30" min="1"></div><div class="field"><label>販売価格（USD）</label><input id="price" type="number" inputmode="decimal" step="0.01" value="0" min="0"></div></div>
-<div class="grid"><div class="field"><label>為替（円/USD）</label><input id="fx" type="number" inputmode="decimal" value="150" min="1"></div><div class="field"><label>送料・その他（円）</label><input id="shipping" type="number" inputmode="numeric" value="0" min="0"></div></div>
-<div class="section-title">🇯🇵 仕入れ・商品条件</div>
-<div class="grid"><div class="field"><label>日本仕入価格（円）</label><input id="cost" type="number" inputmode="numeric" value="0" min="0"></div><div class="field"><label>重量（g）</label><input id="weight" type="number" inputmode="numeric" value="0" min="0"></div></div>
-<div class="grid"><div class="field"><label>商品状態</label><select id="condition"><option>新品</option><option>中古</option><option>リビルト</option><option>NOS</option></select></div><div class="field"><label>在庫方式</label><select id="stockMode"><option>在庫</option><option>無在庫</option><option>両方検討</option></select></div></div>
-<div class="grid"><div class="field"><label>サイズ感</label><select id="sizeClass"><option>片手サイズ</option><option>小型</option><option>中型</option><option>大型</option></select></div><div class="field"><label>返品リスク</label><select id="returnRisk"><option>低</option><option>中</option><option>高</option></select></div></div>
-<div class="section-title">🌎 海外需要の根拠</div>
-<div class="source-row">
-<label class="source-toggle"><input type="checkbox" id="srcReddit">Reddit</label>
-<label class="source-toggle"><input type="checkbox" id="srcForum">Forum</label>
-<label class="source-toggle"><input type="checkbox" id="srcYoutube">YouTube</label>
-<label class="source-toggle"><input type="checkbox" id="srcGoogle">Google</label>
+<h2>今日のリサーチ</h2>
+<div class="metrics">
+<div class="metric"><span>商品</span><b id="countToday">0</b></div>
+<div class="metric"><span>候補</span><b id="candidateToday">0</b></div>
+<div class="metric"><span>平均利益</span><b id="avgProfit">¥0</b></div>
 </div>
-<div class="field" style="margin-top:10px"><label>需要メモ / 日本語要約</label><textarea id="demandMemo" placeholder="例：米国ユーザーが純正部品を探している、ディーラーで入手困難など"></textarea></div>
-<div class="section-title">💰 判定条件</div>
-<div class="grid"><div class="field"><label>eBay等手数料率（%）</label><input id="fee" type="number" value="15" min="0" max="100"></div><div class="field"><label>最低目標利益（円）</label><input id="target" type="number" value="1000" min="0"></div></div>
-<div class="field"><label>メモ</label><textarea id="memo" placeholder="仕入先・注意点など"></textarea></div>
-<div id="decision" class="decision"></div>
-<div class="quick-actions" style="margin-top:10px"><button class="secondary" onclick="openSoldSearch()">🔎 eBay Sold検索</button><button class="primary" onclick="save()">保存する</button></div>
 </div>
-<div class="card" id="preview"></div>
+<div class="card">
+<h2>🔍 この分野の保存キーワード</h2><div id="keywords"></div>
+</div>
 </section>
 
-<section id="quick" class="hidden"><div class="card"><div class="row"><h2 style="margin-top:0">⏱ 5分リサーチ</h2><span id="quickMode" class="pill"></span></div><p class="muted">現在の専門分野から、短時間で再確認したい商品を表示します。</p><div id="quicklist"></div></div></section>
+<section id="register" class="hidden">
+<div class="card">
+<h2>➕ 商品登録</h2>
+<div class="mode">現在の分野：<strong id="registerMode"></strong></div>
+<div class="grid">
+<div class="field full"><label>商品名</label><input id="product" placeholder="例：Camry 2025 OEM Wiper Blade"></div>
+<div class="field"><label>eBay検索キーワード</label><input id="keyword" placeholder="英語検索ワード"></div>
+<div class="field"><label>メーカー / ブランド</label><input id="brand" placeholder="Toyota"></div>
+</div>
 
-<section id="list" class="hidden"><div class="card"><div class="row"><h2 style="margin-top:0">📋 リサーチ履歴</h2><span id="listMode" class="pill"></span></div><div class="grid"><input id="filter" placeholder="商品名・キーワードで検索" oninput="renderList()"><select id="domainFilter" onchange="renderList()"><option value="current">現在の分野</option><option value="all">全分野</option></select></div><div id="listbody"></div></div></section>
+<div id="motorFields">
+<div class="sectionTitle">🚗 Motors専門情報</div>
+<div class="grid">
+<div class="field"><label>メーカー</label><input id="vehicleMaker" placeholder="Toyota"></div>
+<div class="field"><label>車種</label><input id="vehicleModel" placeholder="Camry"></div>
+<div class="field"><label>年式</label><input id="year" placeholder="2025"></div>
+<div class="field"><label>世代 / 型式</label><input id="generation" placeholder="9th Gen"></div>
+<div class="field"><label>部品分類</label><select id="partClass"><option>整備・消耗品</option><option>エンジン・駆動系</option><option>電装・センサー</option><option>外装・板金</option><option>内装</option><option>アクセサリー</option><option>工具・整備用品</option></select></div>
+<div class="field"><label>純正 / 社外 / リビルト / 中古</label><select id="conditionType"><option>純正新品</option><option>社外新品</option><option>リビルト</option><option>中古純正</option></select></div>
+<div class="field full"><label>OEM / Part Number</label><input id="partNumber" placeholder="例：85212-xxxxx"></div>
+<div class="field"><label>適合確認</label><select id="fitment"><option>確認済み</option><option>未確認</option><option>一部確認</option></select></div>
+<div class="field"><label>US市場</label><select id="usMarket"><option>US正規販売</option><option>並行・輸入車向け</option><option>25年ルール等の旧車向け</option><option>不明</option></select></div>
+</div>
+</div>
 
-<section id="settings" class="hidden">
-<div class="card"><h2 style="margin-top:0">⚙️ 自分の販売条件</h2><div class="stage"><b>Stage 1｜評価・経験獲得</b><div class="settings-note">副業スタート時の基準。条件は後からいつでも変更できます。</div></div>
-<div class="grid" style="margin-top:12px"><div class="field"><label>月利益目標</label><input id="setMonthlyProfit" type="number" value="50000"></div><div class="field"><label>初期投資上限</label><input id="setCapital" type="number" value="30000"></div></div>
-<div class="grid"><div class="field"><label>1商品仕入上限</label><input id="setCostMax" type="number" value="3000"></div><div class="field"><label>最低利益</label><input id="setProfitMin" type="number" value="1000"></div></div>
-<div class="grid"><div class="field"><label>理想利益上限目安</label><input id="setProfitIdeal" type="number" value="2000"></div><div class="field"><label>月発送上限</label><input id="setShipMax" type="number" value="30"></div></div>
-<div class="grid"><div class="field"><label>小型在庫上限</label><input id="setSmallStock" type="number" value="30"></div><div class="field"><label>その他在庫上限</label><input id="setOtherStock" type="number" value="10"></div></div>
-<button class="primary" onclick="saveSettings()">設定を保存</button></div>
-<div class="card"><h3 style="margin-top:0">現在の共通判定ルール</h3><div class="checks"><div class="check">✅ 新品優先</div><div class="check">✅ 軽量優先</div><div class="check">✅ 低単価優先</div><div class="check">✅ 無在庫可</div><div class="check">⚠️ 返品リスク高は保留</div><div class="check">⚠️ 規制・適合不明は保留</div></div></div>
+<div class="sectionTitle">📊 eBayデータ</div>
+<div class="grid">
+<div class="field"><label>Sold数（調査期間）</label><input id="sold" type="number" inputmode="numeric" value="0"></div>
+<div class="field"><label>現在出品数</label><input id="active" type="number" inputmode="numeric" value="0"></div>
+<div class="field"><label>販売価格（USD）</label><input id="saleUSD" type="number" inputmode="decimal" step="0.01" value="0"></div>
+<div class="field"><label>日本仕入価格（円）</label><input id="costJPY" type="number" inputmode="numeric" value="0"></div>
+<div class="field"><label>送料（円）</label><input id="shipJPY" type="number" inputmode="numeric" value="0"></div>
+<div class="field"><label>重量（g）</label><input id="weight" type="number" inputmode="numeric" value="0"></div>
+<div class="field"><label>為替（1 USD = 円）</label><input id="fx" type="number" inputmode="decimal" value="150"></div>
+</div>
+
+<div class="sectionTitle">⚠️ リスク・運用</div>
+<div class="grid">
+<div class="field"><label>メーカー規制</label><select id="restriction"><option>問題なし</option><option>要確認</option><option>規制あり</option></select></div>
+<div class="field"><label>返品リスク</label><select id="returnRisk"><option>低</option><option>中</option><option>高</option></select></div>
+<div class="field full"><label>メモ</label><textarea id="memo" placeholder="仕入先・注意点・Redditで見た需要など"></textarea></div>
+</div>
+
+<div class="sectionTitle">💰 判定条件</div>
+<div class="grid">
+<div class="field"><label>eBay等手数料率（%）</label><input id="feeRate" type="number" value="15"></div>
+<div class="field"><label>最低目標利益（円）</label><input id="minProfit" type="number" value="1000"></div>
+</div>
+
+<div id="judgement" class="result"></div>
+<div class="btnrow">
+<button class="btn secondary" onclick="searchSold()">🔎 eBay Sold検索</button>
+<button class="btn primary" onclick="saveItem()">保存する</button>
+</div>
+</div>
 </section>
+
+<section id="quick" class="hidden">
+<div class="card"><h2>⏱ 5分リサーチ</h2><p class="small">まず Sold数・現在出品数・販売価格・仕入価格だけ入力。詳細は後から追加できます。</p>
+<div class="grid">
+<div class="field"><label>商品名</label><input id="qProduct"></div>
+<div class="field"><label>分野</label><select id="qField"></select></div>
+<div class="field"><label>Sold数</label><input id="qSold" type="number" value="0"></div>
+<div class="field"><label>現在出品数</label><input id="qActive" type="number" value="0"></div>
+<div class="field"><label>販売価格 USD</label><input id="qSale" type="number" step=".01" value="0"></div>
+<div class="field"><label>仕入価格 円</label><input id="qCost" type="number" value="0"></div>
+</div>
+<button class="btn primary" style="width:100%;margin-top:8px" onclick="quickJudge()">判定する</button>
+<div id="quickResult"></div>
+</div>
+</section>
+
+<section id="history" class="hidden"><div class="card"><h2>📋 履歴</h2><div id="historyList"></div></div></section>
+<section id="settings" class="hidden"><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
-
-<div class="bottom"><button class="secondary" onclick="exportData()">💾 データ書出</button><button class="secondary" onclick="importData()">📥 読込</button></div>
-<input id="file" type="file" accept=".json" class="hidden" onchange="loadFile(event)">
+<div class="bottom"><button onclick="exportData()">💾 データ書出</button><button onclick="importData()">📥 読込</button></div>
 
 <script>
-const KEY='ebayResearchV3';
-const SETTINGS_KEY='ebayResearchSettingsV3';
-const DOMAIN_KEY='ebayResearchDomainV3';
-const domains={
- motors:{icon:'🚗',name:'eBay Motors',desc:'車両・部品・適合・OEM',keywords:['Toyota OEM','Honda OEM','Nissan OEM','JDM parts','OEM part number','hard to find car parts']},
- carwash:{icon:'🧽',name:'洗車道具',desc:'洗車・ディテーリング用品',keywords:['Japanese detailing tools','car wash brush Japan','microfiber Japan','detailing accessories']},
- tools:{icon:'🔧',name:'工具',desc:'手工具・精密・DIY',keywords:['Made in Japan tools','Japanese hand tools','precision tool Japan','mini tools Japan']},
- industrial:{icon:'🏭',name:'産業工具',desc:'測定・切削・工業用品',keywords:['Japanese industrial tools','precision measuring Japan','cutting tools Japan','Mitutoyo Japan']},
- beauty:{icon:'💄',name:'コスメ道具',desc:'化粧用具・美容ツール',keywords:['Japanese beauty tools','Made in Japan beauty tools','Japanese makeup tools','eyelash curler Japan']},
- okinawa:{icon:'🌺',name:'沖縄文化',desc:'沖縄限定・工芸・文化',keywords:['Okinawa traditional','Ryukyu crafts','Okinawa souvenir','Japanese Okinawa culture']},
- culture:{icon:'🎎',name:'日本文化',desc:'祭り・民芸・和雑貨',keywords:['Japanese traditional crafts','Japanese festival goods','Made in Japan traditional','Japanese folk toys']},
- fishing:{icon:'🎣',name:'釣具',desc:'ルアー・小物・リール部品',keywords:['Japanese fishing tackle','JDM fishing lure','Made in Japan fishing','Japanese reel parts','Japanese hooks']},
- misc:{icon:'📦',name:'その他・雑多',desc:'新分野のテスト用',keywords:['Made in Japan','Japanese made','Japan exclusive','Japanese quality']}
+const fields={
+motors:{name:"🚗 eBay Motors",keys:["Toyota OEM","Genuine Toyota","OEM part number","Camry","Corolla","RAV4","Prius","Lexus OEM","Japanese car parts"],goal:1500},
+wash:{name:"🧽 洗車道具",keys:["Japanese car detailing","Japan detailing tools","car wash brush Japan","microfiber Japan"],goal:1200},
+tools:{name:"🔧 工具",keys:["Japanese hand tools","Made in Japan tools","KTC","TONE","VESSEL"],goal:1500},
+industrial:{name:"🏭 産業工具",keys:["Made in Japan industrial tool","precision tool Japan","Japanese measuring tool"],goal:2000},
+beauty:{name:"💄 コスメ道具",keys:["Japanese beauty tool","Made in Japan beauty tool","Shiseido tool","Japanese makeup brush"],goal:1000},
+fishing:{name:"🎣 釣具",keys:["Japanese fishing tackle","Made in Japan fishing","Shimano Japan","Daiwa Japan","Japanese lure"],goal:1500},
+okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa traditional","Okinawa souvenir"],goal:1200},
+japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
+misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const defaultSettings={monthlyProfit:50000,capital:30000,costMax:3000,profitMin:1000,profitIdeal:2000,shipMax:30,smallStock:30,otherStock:10};
-let settings={...defaultSettings,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')};
-let currentDomain=localStorage.getItem(DOMAIN_KEY)||'motors';
-let oldData=JSON.parse(localStorage.getItem('ebayResearchV2')||localStorage.getItem('ebayResearchV1')||'[]');
-let data=JSON.parse(localStorage.getItem(KEY)||'null');
-if(!data){data=oldData.map(o=>({...o,domain:o.domain||'misc',condition:o.condition||'新品',stockMode:o.stockMode||'在庫',sizeClass:o.sizeClass||'小型',returnRisk:o.returnRisk||'低',domainData:o.domainData||{},sources:o.sources||{},demandMemo:o.demandMemo||''}));persist();}
-const yen=n=>'¥'+Math.round(Number(n)||0).toLocaleString();
-function v(id){return document.getElementById(id)?.value??''}
-function domain(){return domains[currentDomain]||domains.misc}
-function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
-function persistDomain(){localStorage.setItem(DOMAIN_KEY,currentDomain)}
-function calc(o){const revenue=(+o.price||0)*(+o.fx||150),fee=revenue*(+o.fee||15)/100,profit=revenue-fee-(+o.cost||0)-(+o.shipping||0),roi=(+o.cost||0)>0?profit/(+o.cost)*100:0,str=(+o.active||0)>0?(+o.sold||0)/(+o.active)*100:0,breakEven=(+o.cost||0)+(+o.shipping||0),breakEvenUsd=(+o.fx||150)>0?breakEven/(1-(+o.fee||15)/100)/(+o.fx||150):0;return{revenue,fee,profit,roi,str,breakEvenUsd}}
-function decision(o,c){
- const reasons=[],good=[];
- if((+o.cost||0)>settings.costMax)reasons.push('仕入価格が現在の上限を超えています'); else good.push('仕入価格');
- if(c.profit<settings.profitMin)reasons.push('最低利益に届いていません'); else good.push('利益');
- if(o.returnRisk==='高')reasons.push('返品リスクが高い');
- if(o.sizeClass==='大型')reasons.push('現在の副業運用では大型商品');
- if(o.condition!=='新品'&&currentDomain!=='motors')reasons.push('Stage 1は新品を優先');
- const specialist=specialistChecks(o); reasons.push(...specialist.warn); good.push(...specialist.good);
- if(reasons.length===0 && c.profit>=settings.profitMin && (+o.sold||0)>0)return{label:'仕入れ候補',cls:'green',reason:'現在のStage 1条件に適合。'+(good.length?' 確認済み：'+good.join('・'):'')};
- if(c.profit>0 && reasons.length<=2)return{label:'追加調査',cls:'yellow',reason:reasons.join('。')||'需要・送料・適合を追加確認'};
- return{label:'見送り',cls:'red',reason:reasons.join('。')||'現時点の条件では優先度が低め'};
+let mode=localStorage.getItem("ebayMode")||"motors";
+let items=JSON.parse(localStorage.getItem("ebayItems")||"[]");
+
+function showPage(id,btn){
+ document.querySelectorAll("main>section").forEach(s=>s.classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+ if(btn)btn.classList.add("active");
+ if(id==="history")renderHistory();
+ if(id==="home")renderHome();
+ if(id==="register")syncMode();
 }
-function specialistChecks(o){
- const d=o.domainData||{},warn=[],good=[];
- if(o.domain==='motors'){
-   if(!d.vehicleMaker)warn.push('車両メーカーが未入力');
-   if(!d.model)warn.push('車種が未入力');
-   if(!d.year)warn.push('年式が未確認');
-   if(!d.oem)warn.push('OEM/部品番号が未確認');else good.push('OEM番号');
-   if(d.fitment==='不明'||d.fitment==='要確認')warn.push('適合確認が必要');else good.push('適合');
-   if(d.install==='要加工'||d.install==='専門取付')warn.push('取付条件に注意');
-   if(d.usMarket==='不明')warn.push('US市場での流通状況が不明');
-   if(d.usMarket==='25年ルール対象 / 予定')warn.push('25年ルールは部品販売と車両輸入を混同しない');
+function setMode(m){
+ mode=m;localStorage.setItem("ebayMode",m);syncMode();renderHome();
+ showPage("register",document.querySelectorAll(".nav button")[1]);
+}
+function renderHome(){
+ document.getElementById("homeMode").textContent=fields[mode].name;
+ document.getElementById("registerMode").textContent=fields[mode].name;
+ const box=document.getElementById("specialties");box.innerHTML="";
+ Object.entries(fields).forEach(([k,v])=>{
+  const b=document.createElement("button");b.className="specialty"+(k===mode?" active":"");b.textContent=v.name;b.onclick=()=>setMode(k);box.appendChild(b);
+ });
+ document.getElementById("keywords").innerHTML=fields[mode].keys.map(x=>`<span class="keyword">${x}</span>`).join("");
+ const today=new Date().toDateString(), arr=items.filter(x=>new Date(x.time).toDateString()===today);
+ document.getElementById("countToday").textContent=arr.length;
+ const c=arr.filter(x=>x.level==="GO").length;document.getElementById("candidateToday").textContent=c;
+ const profits=arr.map(x=>x.profit).filter(x=>Number.isFinite(x));document.getElementById("avgProfit").textContent="¥"+(profits.length?Math.round(profits.reduce((a,b)=>a+b,0)/profits.length):0).toLocaleString();
+}
+function syncMode(){
+ document.getElementById("registerMode").textContent=fields[mode].name;
+ document.getElementById("homeMode").textContent=fields[mode].name;
+ document.getElementById("motorFields").style.display=mode==="motors"?"block":"none";
+ const q=document.getElementById("qField");q.innerHTML=Object.entries(fields).map(([k,v])=>`<option value="${k}" ${k===mode?"selected":""}>${v.name}</option>`).join("");
+ updateJudge();
+}
+function val(id){return document.getElementById(id)?.value||""}
+function updateJudge(){
+ const sold=+val("sold"),active=+val("active"),sale=+val("saleUSD"),cost=+val("costJPY"),ship=+val("shipJPY"),fx=+val("fx")||150,fee=(+val("feeRate")||15)/100,min=(+val("minProfit")||1000);
+ const revenue=sale*fx, ebayFee=revenue*fee, profit=revenue-ebayFee-cost-ship;
+ const sellRate=active>0?sold/active*100:0;
+ const p=fields[mode].goal;
+ let score=0,reasons=[];
+ if(profit>=Math.max(min,p)){score+=3}else if(profit>=min){score+=2}else reasons.push("利益不足");
+ if(sold>=10){score+=2}else if(sold>=3){score+=1}else reasons.push("Sold少なめ");
+ if(active>0 && sellRate>=30){score+=2}else if(active>0 && sellRate>=10){score+=1}else reasons.push("回転率要確認");
+ if(+val("weight")>0 && +val("weight")<=500)score+=1;
+ if(mode==="motors"){
+  if(val("partNumber")&&val("fitment")==="確認済み")score+=2;else reasons.push("OEM/適合要確認");
+  if(val("restriction")==="問題なし")score+=1;else reasons.push("メーカー規制要確認");
+  if(val("returnRisk")==="高")score-=2,reasons.push("返品リスク高");
+ }else{
+  if(val("restriction")==="問題なし")score+=1;else reasons.push("規制要確認");
+  if(val("returnRisk")==="高")score-=2,reasons.push("返品リスク高");
  }
- if(o.domain==='fishing'){
-   if(!d.type)warn.push('釣具分類が未入力');
-   if(d.danger==='要確認')warn.push('針・刃物等の配送確認が必要');
-   else if(d.danger==='問題なし')good.push('配送確認');
- }
- return{warn,good}
+ let level=score>=8?"GO":score>=5?"KEEP":"STOP";
+ const cls=level==="GO"?"go":level==="KEEP"?"keep":"stop";
+ const label=level==="GO"?"🟢 仕入れ候補":level==="KEEP"?"🟡 保留・追加調査":"🔴 見送り";
+ document.getElementById("judgement").className="result "+cls;
+ document.getElementById("judgement").innerHTML=`<h2>🧭 最終判定：${label}</h2><div>推定利益：<b>¥${Math.round(profit).toLocaleString()}</b>　回転率目安：<b>${sellRate.toFixed(1)}%</b></div><div class="small" style="margin-top:6px">${reasons.length?reasons.join("・"):"主要条件をクリア"}</div>`;
+ return {profit,sellRate,level,score,reasons,revenue,ebayFee};
 }
-function calcCurrent(){return{domain:currentDomain,price:+v('price')||0,fx:+v('fx')||150,cost:+v('cost')||0,shipping:+v('shipping')||0,fee:+v('fee')||15,active:+v('active')||0,sold:+v('sold')||0,days:+v('days')||30,target:+v('target')||settings.profitMin,condition:v('condition'),stockMode:v('stockMode'),sizeClass:v('sizeClass'),returnRisk:v('returnRisk'),domainData:readDomainData()}}
-function domainFieldsHTML(key){
- if(key==='motors')return `<div class="section-title">🚗 Motors専門情報</div>
-<div class="grid">
-<div class="field"><label>メーカー</label><input id="d_vehicleMaker" placeholder="Toyota"></div>
-<div class="field"><label>車種</label><input id="d_model" placeholder="Camry"></div>
-</div>
-<div class="grid">
-<div class="field"><label>年式</label><input id="d_year" placeholder="2025-2026"></div>
-<div class="field"><label>世代 / 型式</label><input id="d_generation" placeholder="9th Gen / XV80"></div>
-</div>
-<div class="grid">
-<div class="field"><label>車両タイプ</label><select id="d_vehicleType"><option>乗用車</option><option>SUV / Crossover</option><option>Pickup / Truck</option><option>Van / Minivan</option><option>Sports / Coupe</option><option>JDM / その他</option></select></div>
-<div class="field"><label>部品分類</label><select id="d_partType"><option>整備・消耗品</option><option>板金・外装</option><option>内装</option><option>電装</option><option>アクセサリー</option><option>チューニング</option><option>その他</option></select></div>
-</div>
-<div class="grid">
-<div class="field"><label>純正 / 社外</label><select id="d_oemType"><option>純正</option><option>社外</option><option>リビルト</option><option>中古純正</option><option>不明</option></select></div>
-<div class="field"><label>取付位置</label><select id="d_position"><option>フロント</option><option>リア</option><option>左右</option><option>車内</option><option>エンジンルーム</option><option>その他</option></select></div>
-</div>
-<div class="field"><label>OEM / Part Number</label><input id="d_oem" placeholder="例：85212-AQ010"></div>
-<div class="grid">
-<div class="field"><label>適合確認</label><select id="d_fitment"><option>確認済み</option><option>要確認</option><option>不明</option></select></div>
-<div class="field"><label>US市場</label><select id="d_usMarket"><option>US正規販売</option><option>US未正規 / JDM</option><option>25年ルール対象 / 予定</option><option>不明</option></select></div>
-</div>
-<div class="grid">
-<div class="field"><label>左ハンドル / 右ハンドル</label><select id="d_steering"><option>共通</option><option>LHD</option><option>RHD</option><option>要確認</option></select></div>
-<div class="field"><label>取付・加工</label><select id="d_install"><option>ボルトオン</option><option>要加工</option><option>専門取付</option><option>不明</option></select></div>
-</div>
-<div class="field"><label>適合車両・注意点メモ</label><textarea id="d_fitmentMemo" placeholder="例：2025-2026 Camry XV80 / 米国仕様のみ確認済み"></textarea></div>`;
- if(key==='fishing')return `<div class="section-title">🎣 釣具専門情報</div><div class="grid"><div class="field"><label>分類</label><select id="d_type"><option>ルアー</option><option>フック・仕掛け</option><option>リール部品</option><option>ロッド周辺</option><option>ライン関連</option><option>小物・アクセサリー</option><option>工具・メンテ用品</option><option>その他</option></select></div><div class="field"><label>対象釣種</label><input id="d_style" placeholder="Bass / Trout / Saltwater"></div></div><div class="grid"><div class="field"><label>JDM / 日本限定性</label><select id="d_jdm"><option>高い</option><option>あり</option><option>共通品</option><option>不明</option></select></div><div class="field"><label>針・刃物等の配送</label><select id="d_danger"><option>問題なし</option><option>要確認</option></select></div></div><div class="field"><label>型番 / 品番</label><input id="d_modelNo" placeholder="メーカー型番"></div>`;
- const map={carwash:['用途','素材 / タイプ'],tools:['工具分類','型番 / 規格'],industrial:['産業分類','型番 / 規格'],beauty:['道具分類','素材 / 用途'],okinawa:['文化分類','地域 / 工芸'],culture:['文化分類','用途 / 由来'],misc:['分類','特徴']};
- const x=map[key]||map.misc;return `<div class="section-title">${domain().icon} ${domain().name}専門情報</div><div class="grid"><div class="field"><label>${x[0]}</label><input id="d_cat" placeholder="${x[0]}"></div><div class="field"><label>${x[1]}</label><input id="d_spec" placeholder="${x[1]}"></div></div><div class="field"><label>日本限定性 / 差別化ポイント</label><input id="d_unique" placeholder="日本製・限定・職人・規格など"></div>`;
+document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
+function saveItem(){
+ const r=updateJudge();
+ const x={time:new Date().toISOString(),mode,product:val("product"),keyword:val("keyword"),brand:val("brand"),sold:+val("sold"),active:+val("active"),saleUSD:+val("saleUSD"),cost:+val("costJPY"),ship:+val("shipJPY"),weight:+val("weight"),profit:Math.round(r.profit),level:r.level,score:r.score,partNumber:val("partNumber")};
+ if(!x.product){alert("商品名を入力してください");return}
+ items.unshift(x);items=items.slice(0,300);localStorage.setItem("ebayItems",JSON.stringify(items));alert("保存しました");renderHome();
 }
-function readDomainData(){const obj={};document.querySelectorAll('#domainFields input,#domainFields select').forEach(el=>obj[el.id.replace('d_','')]=el.value);return obj}
-function renderDomains(){const g=document.getElementById('domainGrid');g.innerHTML=Object.entries(domains).map(([k,d])=>`<button class="domain-btn ${k===currentDomain?'active':''}" onclick="selectDomain('${k}')">${d.icon} ${d.name}<span>${d.desc}</span></button>`).join('')}
-function selectDomain(k){currentDomain=k;persistDomain();renderAll();show('dash')}
-function renderMode(){const d=domain();document.getElementById('modeName').textContent=`${d.icon} ${d.name}`;document.getElementById('newModeName').textContent=`${d.icon} ${d.name}`;document.getElementById('quickMode').textContent=d.name;document.getElementById('listMode').textContent=d.name;document.getElementById('keywordTags').innerHTML=d.keywords.map(x=>`<span class="tag">${esc(x)}</span>`).join('');document.getElementById('domainFields').innerHTML=domainFieldsHTML(currentDomain);attachPreviewListeners()}
-function save(){const o={id:Date.now(),domain:currentDomain,name:v('name'),keyword:v('keyword'),maker:v('maker'),sold:+v('sold'),active:+v('active'),days:+v('days')||30,price:+v('price'),fx:+v('fx'),cost:+v('cost'),weight:+v('weight'),shipping:+v('shipping'),fee:+v('fee'),target:+v('target')||settings.profitMin,condition:v('condition'),stockMode:v('stockMode'),sizeClass:v('sizeClass'),returnRisk:v('returnRisk'),domainData:readDomainData(),sources:{reddit:document.getElementById('srcReddit').checked,forum:document.getElementById('srcForum').checked,youtube:document.getElementById('srcYoutube').checked,google:document.getElementById('srcGoogle').checked},demandMemo:v('demandMemo'),memo:v('memo'),date:new Date().toLocaleDateString('ja-JP')};if(!o.name){alert('商品名を入力してください');return}o.status=decision(o,calc(o)).label;data.unshift(o);persist();alert('保存しました');reset();renderAll();show('list')}
-function reset(){['name','keyword','maker','memo','demandMemo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});['sold','active','price','cost','weight','shipping'].forEach(id=>document.getElementById(id).value=0);document.getElementById('days').value=30;document.getElementById('fx').value=150;document.getElementById('fee').value=15;document.getElementById('target').value=settings.profitMin;document.getElementById('condition').value='新品';document.getElementById('stockMode').value='在庫';document.getElementById('sizeClass').value='片手サイズ';document.getElementById('returnRisk').value='低';['srcReddit','srcForum','srcYoutube','srcGoogle'].forEach(id=>document.getElementById(id).checked=false);document.getElementById('domainFields').innerHTML=domainFieldsHTML(currentDomain);attachPreviewListeners();preview()}
-function show(id,btn){['dash','new','quick','list','settings'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderAll()}
-function currentData(){return data.filter(x=>(x.domain||'misc')===currentDomain)}
-function renderAll(){renderDomains();renderMode();const arr=currentData();document.getElementById('count').textContent=arr.length;const cand=arr.filter(x=>x.status==='仕入れ候補');document.getElementById('candidate').textContent=cand.length;const avg=arr.length?arr.reduce((a,x)=>a+calc(x).profit,0)/arr.length:0;document.getElementById('avgprofit').textContent=yen(avg);document.getElementById('top').innerHTML=cand.slice(0,5).map(card).join('')||'<p class="muted">この分野の候補はまだありません。</p>';const quick=arr.filter(x=>x.status!=='見送り').slice(0,10);document.getElementById('quicklist').innerHTML=quick.map(card).join('')||'<p class="muted">まず商品を登録してください。</p>';renderList();loadSettingsUI();preview()}
-function card(o){const c=calc(o),d=domains[o.domain]||domains.misc,cls=o.status==='仕入れ候補'?'green':o.status==='追加調査'?'yellow':'red';const detail=o.domain==='motors'?(o.domainData?.model||'')+' '+(o.domainData?.oem||''):o.domain==='fishing'?(o.domainData?.type||'')+' '+(o.domainData?.modelNo||''):(o.domainData?.cat||'');return `<div class="item"><div class="row"><b>${d.icon} ${esc(o.name)}</b><span class="tag">${esc(o.status||'')}</span></div>${detail?`<div class="muted" style="margin-top:4px">${esc(detail)}</div>`:''}<div class="grid3" style="margin-top:8px"><div><span class="muted">Sold</span><br><b>${+o.sold||0}</b></div><div><span class="muted">販売価格</span><br><b>$${(+o.price||0).toFixed(2)}</b></div><div><span class="muted">利益</span><br><b class="${cls}">${yen(c.profit)}</b></div></div><div class="muted" style="margin-top:6px">${d.name} ・ ROI ${c.roi.toFixed(0)}% ・ Sold率 ${c.str.toFixed(1)}% ・ ${o.date||''}</div></div>`}
-function renderList(){const q=(document.getElementById('filter')?.value||'').toLowerCase();const all=document.getElementById('domainFilter')?.value==='all';const arr=(all?data:currentData()).filter(o=>(`${o.name||''} ${o.keyword||''} ${o.maker||''} ${JSON.stringify(o.domainData||{})}`).toLowerCase().includes(q));document.getElementById('listbody').innerHTML=arr.map(o=>card(o)+`<button class="secondary small" onclick="removeItem(${o.id})">削除</button>`).join('')||'<p class="muted">該当商品なし</p>'}
-function removeItem(id){if(confirm('削除しますか？')){data=data.filter(x=>x.id!==id);persist();renderAll()}}
-function preview(){const el=document.getElementById('preview');if(!el)return;const o=calcCurrent(),c=calc(o),d=decision(o,c);el.innerHTML=`<h3 style="margin-top:0">💰 利益シミュレーション</h3><div class="grid3"><div class="stat">売上<b>${yen(c.revenue)}</b></div><div class="stat">手数料<b>${yen(c.fee)}</b></div><div class="stat">利益<b class="${c.profit>=settings.profitMin?'green':c.profit>0?'yellow':'red'}">${yen(c.profit)}</b></div></div><div class="grid3" style="margin-top:8px"><div class="stat"><span class="muted">ROI</span><b>${c.roi.toFixed(0)}%</b></div><div class="stat"><span class="muted">Sold率目安</span><b>${c.str.toFixed(1)}%</b></div><div class="stat"><span class="muted">損益分岐価格</span><b>$${c.breakEvenUsd.toFixed(2)}</b></div></div>`;const box=document.getElementById('decision');if(box)box.innerHTML=`<div class="row"><strong>🧭 最終判定：<span class="${d.cls}">${d.label}</span></strong></div><div class="muted" style="margin-top:6px">${esc(d.reason)}</div>`}
-function attachPreviewListeners(){document.querySelectorAll('#new input,#new textarea,#new select').forEach(x=>{x.removeEventListener('input',preview);x.addEventListener('input',preview);x.removeEventListener('change',preview);x.addEventListener('change',preview)})}
-function openSoldSearch(){const q=v('keyword')||v('name');if(!q){alert('eBay検索キーワードを入力してください');return}window.open('https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(q)+'&LH_Sold=1&LH_Complete=1','_blank')}
-function loadSettingsUI(){document.getElementById('setMonthlyProfit').value=settings.monthlyProfit;document.getElementById('setCapital').value=settings.capital;document.getElementById('setCostMax').value=settings.costMax;document.getElementById('setProfitMin').value=settings.profitMin;document.getElementById('setProfitIdeal').value=settings.profitIdeal;document.getElementById('setShipMax').value=settings.shipMax;document.getElementById('setSmallStock').value=settings.smallStock;document.getElementById('setOtherStock').value=settings.otherStock;document.getElementById('modeStage').textContent='Stage 1'}
-function saveSettings(){settings={monthlyProfit:+v('setMonthlyProfit')||50000,capital:+v('setCapital')||30000,costMax:+v('setCostMax')||3000,profitMin:+v('setProfitMin')||1000,profitIdeal:+v('setProfitIdeal')||2000,shipMax:+v('setShipMax')||30,smallStock:+v('setSmallStock')||30,otherStock:+v('setOtherStock')||10};localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));document.getElementById('target').value=settings.profitMin;alert('販売条件を保存しました');renderAll()}
-function exportData(){const payload={version:3,exportedAt:new Date().toISOString(),settings,currentDomain,data};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ebay-research-v3-backup.json';a.click()}
-function importData(){document.getElementById('file').click()}
-function loadFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(r.result);if(Array.isArray(obj)){data=obj.map(x=>({...x,domain:x.domain||'misc'}))}else{data=obj.data||[];settings={...defaultSettings,...(obj.settings||{})};currentDomain=obj.currentDomain||currentDomain;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));persistDomain()}persist();renderAll();alert('読み込みました')}catch(err){alert('JSONファイルを読み込めません')}};r.readAsText(f)}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-document.getElementById('target').value=settings.profitMin;attachPreviewListeners();renderAll();
+function searchSold(){
+ const q=val("keyword")||val("product");if(!q){alert("eBay検索キーワードを入力してください");return}
+ window.open("https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(q)+"&LH_Sold=1&LH_Complete=1","_blank");
+}
+function quickJudge(){
+ const f=document.getElementById("qField").value,s=+val("qSold"),a=+val("qActive"),usd=+val("qSale"),cost=+val("qCost"),rev=usd*150,profit=rev-rev*.15-cost,rate=a?100*s/a:0,goal=fields[f].goal;
+ const level=profit>=goal&&s>=10&&rate>=10?"GO":profit>=1000?"KEEP":"STOP";
+ document.getElementById("quickResult").innerHTML=`<div class="result ${level==="GO"?"go":level==="KEEP"?"keep":"stop"}><h2>${level==="GO"?"🟢 仕入れ候補":level==="KEEP"?"🟡 保留":"🔴 見送り"}</h2>利益目安 ¥${Math.round(profit).toLocaleString()} / 回転率 ${rate.toFixed(1)}%</div>`;
+}
+function renderHistory(){
+ const box=document.getElementById("historyList");const arr=items.filter(x=>x.mode===mode);
+ if(!arr.length){box.innerHTML='<p class="small">まだ保存データがありません。</p>';return}
+ box.innerHTML=arr.slice(0,50).map(x=>`<div class="result ${x.level==="GO"?"go":x.level==="KEEP"?"keep":"stop"}"><b>${x.level}　${x.product||"(商品名なし)"}</b><br><span class="small">${fields[x.mode]?.name||x.mode} / Sold ${x.sold} / 出品 ${x.active} / 利益 ¥${x.profit.toLocaleString()}</span></div>`).join("");
+}
+function exportData(){const blob=new Blob([JSON.stringify(items,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="ebay-research-data.json";a.click()}
+function importData(){const i=document.createElement("input");i.type="file";i.accept=".json";i.onchange=()=>{const r=new FileReader();r.onload=()=>{try{items=JSON.parse(r.result);localStorage.setItem("ebayItems",JSON.stringify(items));renderHome();alert("読み込みました")}catch(e){alert("JSONを読み込めませんでした")}};r.readAsText(i.files[0])};i.click()}
+renderHome();syncMode();
 </script>
-<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');</script>
-</body></html>
+</body>
+</html>
