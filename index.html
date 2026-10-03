@@ -25,7 +25,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3.3</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3.4</div></header>
 <main>
 <div class="nav">
 <button class="active" onclick="showPage('home',this)">🏠 ホーム</button>
@@ -85,8 +85,11 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <div class="field"><label>Sold数（調査期間）</label><input id="sold" type="number" inputmode="numeric" value="0"></div>
 <div class="field"><label>現在出品数</label><input id="active" type="number" inputmode="numeric" value="0"></div>
 <div class="field"><label>販売価格（USD）</label><input id="saleUSD" type="number" inputmode="decimal" step="0.01" value="0"></div>
+<div class="field"><label>購入者送料（USD）</label><input id="buyerShipUSD" type="number" inputmode="decimal" step="0.01" value="0"></div>
 <div class="field"><label>日本仕入価格（円）</label><input id="costJPY" type="number" inputmode="numeric" value="0"></div>
-<div class="field"><label>送料（円）</label><input id="shipJPY" type="number" inputmode="numeric" value="0"></div>
+<div class="field"><label>仕入先送料（円）</label><input id="shipJPY" type="number" inputmode="numeric" value="0"></div>
+<div class="field"><label>海外発送送料原価（円）</label><input id="outShipJPY" type="number" inputmode="numeric" value="0"></div>
+<div class="field"><label>セラー負担関税・税（円）</label><input id="tariffJPY" type="number" inputmode="numeric" value="0"></div>
 <div class="field"><label>重量（g）</label><input id="weight" type="number" inputmode="numeric" value="0"></div>
 <div class="field"><label>為替（1 USD = 円）</label><input id="fx" type="number" inputmode="decimal" value="150"></div>
 </div>
@@ -113,7 +116,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </section>
 
 <section id="quick" class="hidden">
-<div class="card"><h2>⏱ 5分リサーチ</h2><p class="small">まず Sold数・現在出品数・販売価格・仕入価格だけ入力。詳細は後から追加できます。</p>
+<div class="card"><h2>⏱ 5分リサーチ</h2><p class="small">まず Sold数・現在出品数・販売価格・仕入価格だけ入力。5分で「候補／保留／見送り」を仮判定し、詳細は登録画面で詰めます。</p>
 <div class="grid">
 <div class="field"><label>商品名</label><input id="qProduct"></div>
 <div class="field"><label>分野</label><select id="qField"></select></div>
@@ -182,34 +185,66 @@ function syncMode(){
 }
 function val(id){return document.getElementById(id)?.value||""}
 function updateJudge(){
- const sold=+val("sold"),active=+val("active"),sale=+val("saleUSD"),cost=+val("costJPY"),ship=+val("shipJPY"),fx=+val("fx")||150,fee=(+val("feeRate")||15)/100,min=(+val("minProfit")||1000);
- const revenue=sale*fx, ebayFee=revenue*fee, profit=revenue-ebayFee-cost-ship;
- const sellRate=active>0?sold/active*100:0;
+ const sold=+val("sold"),active=+val("active"),sale=+val("saleUSD"),buyerShip=+val("buyerShipUSD"),
+ cost=+val("costJPY"),ship=+val("shipJPY"),outShip=+val("outShipJPY"),tariff=+val("tariffJPY"),
+ fx=+val("fx")||150,fee=(+val("feeRate")||15)/100,min=(+val("minProfit")||1000);
+
+ // eBay上の売上総額（商品価格＋購入者送料）から手数料を計算
+ const grossUSD=sale+buyerShip;
+ const revenue=grossUSD*fx;
+ const ebayFee=revenue*fee;
+ const profit=revenue-ebayFee-cost-ship-outShip-tariff;
+
+ // 目安の売れ行き：Sold / (Sold + 現在出品)
+ const denominator=sold+active;
+ const sellRate=denominator>0?sold/denominator*100:0;
+
  const p=fields[mode].goal;
  let score=0,reasons=[];
- if(profit>=Math.max(min,p)){score+=3}else if(profit>=min){score+=2}else reasons.push("利益不足");
- if(sold>=10){score+=2}else if(sold>=3){score+=1}else reasons.push("Sold少なめ");
- if(active>0 && sellRate>=30){score+=2}else if(active>0 && sellRate>=10){score+=1}else reasons.push("回転率要確認");
+
+ if(profit>=Math.max(min,p)){score+=3}
+ else if(profit>=min){score+=2}
+ else reasons.push("利益不足");
+
+ if(sold>=10){score+=2}
+ else if(sold>=3){score+=1}
+ else reasons.push("Sold少なめ");
+
+ if(denominator>0 && sellRate>=30){score+=2}
+ else if(denominator>0 && sellRate>=10){score+=1}
+ else reasons.push("回転率要確認");
+
  if(+val("weight")>0 && +val("weight")<=500)score+=1;
+
  if(mode==="motors"){
-  if(val("partNumber")&&val("fitment")==="確認済み")score+=2;else reasons.push("OEM/適合要確認");
-  if(val("restriction")==="問題なし")score+=1;else reasons.push("メーカー規制要確認");
-  if(val("returnRisk")==="高")score-=2,reasons.push("返品リスク高");
+   if(val("partNumber") && val("fitment")==="確認済み"){score+=2}
+   else reasons.push("OEM/適合要確認");
+   if(val("restriction")==="問題なし"){score+=1}
+   else reasons.push("メーカー規制要確認");
+   if(val("returnRisk")==="高"){score-=2;reasons.push("返品リスク高")}
  }else{
-  if(val("restriction")==="問題なし")score+=1;else reasons.push("規制要確認");
-  if(val("returnRisk")==="高")score-=2,reasons.push("返品リスク高");
+   if(val("restriction")==="問題なし")score+=1;
+   else reasons.push("規制要確認");
+   if(val("returnRisk")==="高"){score-=2;reasons.push("返品リスク高")}
  }
+
  let level=score>=8?"GO":score>=5?"KEEP":"STOP";
  const cls=level==="GO"?"go":level==="KEEP"?"keep":"stop";
  const label=level==="GO"?"🟢 仕入れ候補":level==="KEEP"?"🟡 保留・追加調査":"🔴 見送り";
+
  document.getElementById("judgement").className="result "+cls;
- document.getElementById("judgement").innerHTML=`<h2>🧭 最終判定：${label}</h2><div>推定利益：<b>¥${Math.round(profit).toLocaleString()}</b>　回転率目安：<b>${sellRate.toFixed(1)}%</b></div><div class="small" style="margin-top:6px">${reasons.length?reasons.join("・"):"主要条件をクリア"}</div>`;
+ document.getElementById("judgement").innerHTML=
+ `<h2>🧭 最終判定：${label}</h2>
+ <div>推定利益：<b>¥${Math.round(profit).toLocaleString()}</b>
+ ／ 回転率目安：<b>${sellRate.toFixed(1)}%</b></div>
+ <div class="small" style="margin-top:6px">${reasons.length?reasons.join("・"):"主要条件をクリア"}</div>`;
+
  return {profit,sellRate,level,score,reasons,revenue,ebayFee};
 }
 document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
 function saveItem(){
  const r=updateJudge();
- const x={time:new Date().toISOString(),mode,product:val("product"),keyword:val("keyword"),brand:val("brand"),sold:+val("sold"),active:+val("active"),saleUSD:+val("saleUSD"),cost:+val("costJPY"),ship:+val("shipJPY"),weight:+val("weight"),profit:Math.round(r.profit),level:r.level,score:r.score,partNumber:val("partNumber")};
+ const x={time:new Date().toISOString(),mode,product:val("product"),keyword:val("keyword"),brand:val("brand"),sold:+val("sold"),active:+val("active"),saleUSD:+val("saleUSD"),cost:+val("costJPY"),ship:+val("shipJPY"),buyerShipUSD:+val("buyerShipUSD"),outShip:+val("outShipJPY"),tariff:+val("tariffJPY"),weight:+val("weight"),profit:Math.round(r.profit),level:r.level,score:r.score,partNumber:val("partNumber")};
  if(!x.product){alert("商品名を入力してください");return}
  items.unshift(x);items=items.slice(0,300);localStorage.setItem("ebayItems",JSON.stringify(items));alert("保存しました");renderHome();
 }
