@@ -137,8 +137,8 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <div class="field"><label>販売価格 USD</label><input id="qSale" type="number" step=".01" value="0"></div>
 <div class="field"><label>仕入価格 円</label><input id="qCost" type="number" value="0"></div>
 </div>
-<button class="btn primary" style="width:100%;margin-top:8px" onclick="quickJudge()">判定する</button>
-<div id="quickResult"></div>
+<button id="quickJudgeBtn" class="btn primary" type="button" style="width:100%;margin-top:8px">🧭 判定する</button>
+<div id="quickResult" aria-live="polite"></div>
 </div>
 </section>
 
@@ -265,6 +265,11 @@ function updateJudge(){
  return {profit,sellRate,level,score,reasons,revenue,ebayFee};
 }
 document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
+
+document.addEventListener("DOMContentLoaded",()=>{
+ const quickBtn=document.getElementById("quickJudgeBtn");
+ if(quickBtn) quickBtn.addEventListener("click",quickJudge);
+});
 function runJudge(){
   try{
     const r=updateJudge();
@@ -329,9 +334,52 @@ function searchSold(){
  window.open("https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(q)+"&LH_Sold=1&LH_Complete=1","_blank");
 }
 function quickJudge(){
- const f=document.getElementById("qField").value,s=+val("qSold"),a=+val("qActive"),usd=+val("qSale"),cost=+val("qCost"),rev=usd*150,profit=rev-rev*.15-cost,rate=a?100*s/a:0,goal=fields[f].goal;
- const level=profit>=goal&&s>=10&&rate>=10?"GO":profit>=1000?"KEEP":"STOP";
- document.getElementById("quickResult").innerHTML=`<div class="result ${level==="GO"?"go":level==="KEEP"?"keep":"stop"}><h2>${level==="GO"?"🟢 仕入れ候補":level==="KEEP"?"🟡 保留":"🔴 見送り"}</h2>利益目安 ¥${Math.round(profit).toLocaleString()} / 回転率 ${rate.toFixed(1)}%</div>`;
+ try{
+   const fEl=document.getElementById("qField");
+   const resultEl=document.getElementById("quickResult");
+   if(!fEl || !resultEl) throw new Error("5分リサーチの入力欄を取得できません");
+
+   const f=fEl.value;
+   const sold=Number(document.getElementById("qSold")?.value||0);
+   const active=Number(document.getElementById("qActive")?.value||0);
+   const usd=Number(document.getElementById("qSale")?.value||0);
+   const cost=Number(document.getElementById("qCost")?.value||0);
+   const fx=150;
+   const feeRate=0.15;
+   const rev=usd*fx;
+   const profit=rev-rev*feeRate-cost;
+   const rate=active>0 ? 100*sold/active : (sold>0 ? 100 : 0);
+   const goal=fields[f]?.goal ?? 1000;
+
+   const level=profit>=goal && sold>=10 && rate>=10
+     ?"GO"
+     :profit>=1000
+       ?"KEEP"
+       :"STOP";
+
+   const cls=level==="GO"?"go":level==="KEEP"?"keep":"stop";
+   const label=level==="GO"?"🟢 仕入れ候補":level==="KEEP"?"🟡 保留":"🔴 見送り";
+
+   resultEl.innerHTML=`<div class="result ${cls}">
+     <h2>${label}</h2>
+     <div>利益目安 <b>¥${Math.round(profit).toLocaleString()}</b></div>
+     <div>回転率目安 <b>${rate.toFixed(1)}%</b></div>
+     <div class="small" style="margin-top:6px">
+       Sold ${sold} / 現在出品 ${active} / 販売価格 $${usd.toFixed(2)}
+     </div>
+   </div>`;
+
+   resultEl.scrollIntoView({behavior:"smooth",block:"center"});
+   return {profit,rate,level};
+ }catch(e){
+   console.error("quickJudge error:",e);
+   const resultEl=document.getElementById("quickResult");
+   if(resultEl){
+     resultEl.innerHTML='<div class="result stop"><b>⚠️ 判定できませんでした</b><div class="small">入力欄を確認して、もう一度押してください。</div></div>';
+   }
+   alert("5分リサーチの判定処理でエラーが発生しました。");
+   return null;
+ }
 }
 function renderHistory(){
  const box=document.getElementById("historyList");
