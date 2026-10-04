@@ -316,6 +316,7 @@ function runJudge(){
 function saveItem(){
  const r=runJudge();
  if(!r)return;
+
  const x={
    id:Date.now(),
    time:new Date().toISOString(),
@@ -343,7 +344,27 @@ function saveItem(){
    restriction:val("restriction"),
    returnRisk:val("returnRisk"),
    memo:val("memo"),
+
    vehicle:{
      maker:val("vehicleMaker"),
      model:val("vehicleModel"),
-     year:val("year
+     year:val("year"),
+     generation:val("generation"),
+     partClass:val("partClass"),
+     conditionType:val("conditionType"),
+     partNumber:val("partNumber"),
+     fitment:val("fitment"),
+     usMarket:val("usMarket")
+   }
+ };
+
+ items.unshift(x);
+ localStorage.setItem("ebayItems",JSON.stringify(items));
+
+ alert("保存しました");
+
+ showPage(
+   "history",
+   document.querySelector('.nav button[data-page="history"]')
+ );
+}
