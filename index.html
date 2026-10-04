@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
+<meta name="app-version" content="3.7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -36,14 +37,14 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3.5</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3.7</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-04 / v3.7</div></header>
 <main>
 <div class="nav">
-<button class="active" onclick="showPage('home',this)">🏠 ホーム</button>
-<button onclick="showPage('register',this)">➕ 登録</button>
-<button onclick="showPage('quick',this)">⏱ 5分</button>
-<button onclick="showPage('history',this)">📋 履歴</button>
-<button onclick="showPage('settings',this)">⚙️ 設定</button>
+<button type="button" class="active" data-page="home">🏠 ホーム</button>
+<button type="button" data-page="register">➕ 登録</button>
+<button type="button" data-page="quick">⏱ 5分</button>
+<button type="button" data-page="history">📋 履歴</button>
+<button type="button" data-page="settings">⚙️ 設定</button>
 </div>
 
 <section id="home">
@@ -143,7 +144,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </section>
 
 <section id="history" class="hidden"><div class="card"><h2>📋 履歴</h2><div id="historyList"></div></div></section>
-<section id="settings" class="hidden"><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
+<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v3.7</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
 
 <div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
@@ -170,14 +171,27 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
+const APP_VERSION="v3.7";
 let mode=localStorage.getItem("ebayMode")||"motors";
-let items=JSON.parse(localStorage.getItem("ebayItems")||"[]");
+if(!fields[mode]) mode="motors";
+let items=[];
+try{
+  const raw=localStorage.getItem("ebayItems");
+  const parsed=raw?JSON.parse(raw):[];
+  items=Array.isArray(parsed)?parsed:[];
+}catch(e){
+  console.warn("保存データを読み込めなかったため空データで起動します",e);
+  items=[];
+}
 
 function showPage(id,btn){
+ const page=document.getElementById(id);
+ if(!page){console.warn("Page not found:",id);return;}
  document.querySelectorAll("main>section").forEach(s=>s.classList.add("hidden"));
- document.getElementById(id).classList.remove("hidden");
+ page.classList.remove("hidden");
  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
- if(btn)btn.classList.add("active");
+ const activeBtn=btn||document.querySelector('.nav button[data-page="'+id+'"]');
+ if(activeBtn)activeBtn.classList.add("active");
  if(id==="history")renderHistory();
  if(id==="home")renderHome();
  if(id==="register")syncMode();
@@ -191,7 +205,7 @@ function renderHome(){
  document.getElementById("registerMode").textContent=fields[mode].name;
  const box=document.getElementById("specialties");box.innerHTML="";
  Object.entries(fields).forEach(([k,v])=>{
-  const b=document.createElement("button");b.className="specialty"+(k===mode?" active":"");b.textContent=v.name;b.onclick=()=>setMode(k);box.appendChild(b);
+  const b=document.createElement("button");b.type="button";b.className="specialty"+(k===mode?" active":"");b.textContent=v.name;b.onclick=()=>setMode(k);box.appendChild(b);
  });
  document.getElementById("keywords").innerHTML=fields[mode].keys.map(x=>`<span class="keyword">${x}</span>`).join("");
  const today=new Date().toDateString(), arr=items.filter(x=>new Date(x.time).toDateString()===today);
@@ -266,10 +280,29 @@ function updateJudge(){
 }
 document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
 
-document.addEventListener("DOMContentLoaded",()=>{
+function bindAppEvents(){
+ document.querySelectorAll(".nav button[data-page]").forEach(btn=>{
+   btn.addEventListener("click",()=>showPage(btn.dataset.page,btn));
+ });
  const quickBtn=document.getElementById("quickJudgeBtn");
  if(quickBtn) quickBtn.addEventListener("click",quickJudge);
-});
+ const runBtn=document.querySelector('#register button[onclick="runJudge()"]');
+ if(runBtn){runBtn.removeAttribute("onclick");runBtn.addEventListener("click",runJudge);}
+ const saveBtn=document.querySelector('#register button[onclick="saveItem()"]');
+ if(saveBtn){saveBtn.removeAttribute("onclick");saveBtn.addEventListener("click",saveItem);}
+ const soldBtn=document.querySelector('#register button[onclick="searchSold()"]');
+ if(soldBtn){soldBtn.removeAttribute("onclick");soldBtn.addEventListener("click",searchSold);}
+ const exportBtn=document.querySelector('.bottom button[onclick="exportData()"]');
+ if(exportBtn){exportBtn.removeAttribute("onclick");exportBtn.addEventListener("click",exportData);}
+ const importBtn=document.querySelector('.bottom button[onclick="importData()"]');
+ if(importBtn){importBtn.removeAttribute("onclick");importBtn.addEventListener("click",importData);}
+ const closeBtn=document.querySelector('.modal-close');
+ if(closeBtn){closeBtn.removeAttribute("onclick");closeBtn.addEventListener("click",()=>closeDetail());}
+ const modal=document.getElementById("detailModal");
+ if(modal){modal.addEventListener("click",e=>{if(e.target===modal)closeDetail();});}
+}
+if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",bindAppEvents);
+else bindAppEvents();
 function runJudge(){
   try{
     const r=updateJudge();
@@ -313,64 +346,4 @@ function saveItem(){
    vehicle:{
      maker:val("vehicleMaker"),
      model:val("vehicleModel"),
-     year:val("year"),
-     generation:val("generation"),
-     partClass:val("partClass"),
-     conditionType:val("conditionType"),
-     partNumber:val("partNumber"),
-     fitment:val("fitment"),
-     usMarket:val("usMarket")
-   }
- };
- if(!x.product){alert("商品名を入力してください");return}
- items.unshift(x);items=items.slice(0,300);
- localStorage.setItem("ebayItems",JSON.stringify(items));
- alert("保存しました");
- renderHome();
- renderHistory();
-}
-function searchSold(){
- const q=val("keyword")||val("product");if(!q){alert("eBay検索キーワードを入力してください");return}
- window.open("https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(q)+"&LH_Sold=1&LH_Complete=1","_blank");
-}
-function quickJudge(){
- try{
-   const fEl=document.getElementById("qField");
-   const resultEl=document.getElementById("quickResult");
-   if(!fEl || !resultEl) throw new Error("5分リサーチの入力欄を取得できません");
-
-   const f=fEl.value;
-   const sold=Number(document.getElementById("qSold")?.value||0);
-   const active=Number(document.getElementById("qActive")?.value||0);
-   const usd=Number(document.getElementById("qSale")?.value||0);
-   const cost=Number(document.getElementById("qCost")?.value||0);
-   const fx=150;
-   const feeRate=0.15;
-   const rev=usd*fx;
-   const profit=rev-rev*feeRate-cost;
-   const rate=active>0 ? 100*sold/active : (sold>0 ? 100 : 0);
-   const goal=fields[f]?.goal ?? 1000;
-
-   const level=profit>=goal && sold>=10 && rate>=10
-     ?"GO"
-     :profit>=1000
-       ?"KEEP"
-       :"STOP";
-
-   const cls=level==="GO"?"go":level==="KEEP"?"keep":"stop";
-   const label=level==="GO"?"🟢 仕入れ候補":level==="KEEP"?"🟡 保留":"🔴 見送り";
-
-   resultEl.innerHTML=`<div class="result ${cls}">
-     <h2>${label}</h2>
-     <div>利益目安 <b>¥${Math.round(profit).toLocaleString()}</b></div>
-     <div>回転率目安 <b>${rate.toFixed(1)}%</b></div>
-     <div class="small" style="margin-top:6px">
-       Sold ${sold} / 現在出品 ${active} / 販売価格 $${usd.toFixed(2)}
-     </div>
-   </div>`;
-
-   resultEl.scrollIntoView({behavior:"smooth",block:"center"});
-   return {profit,rate,level};
- }catch(e){
-   console.error("quickJudge error:",e);
-   const resultEl=document.
+     year:val("year
