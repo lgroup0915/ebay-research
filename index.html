@@ -21,11 +21,22 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 .specialties{display:grid;grid-template-columns:1fr 1fr;gap:10px}.specialty{border:1px solid #e1e5ec;background:#fff;border-radius:16px;padding:14px;text-align:left;font-size:15px}.specialty.active{border:2px solid #2563eb;background:#eff6ff}
 .keyword{display:inline-block;background:#eef2ff;color:#334155;border-radius:999px;padding:7px 10px;margin:4px;font-size:13px}
 .hidden{display:none!important}.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:9px 14px;border-top:1px solid #ddd;display:flex;gap:10px;z-index:10}.bottom button{flex:1;border:0;border-radius:14px;padding:13px;font-weight:700;background:#eef2f7}
+
+.history-card{border:1px solid #e5e7eb;border-radius:16px;padding:14px;margin:10px 0;background:#fff}
+.history-card button{margin-top:10px;width:100%;border:0;border-radius:12px;padding:11px;background:#eef2f7;font-weight:700}
+.modal{position:fixed;inset:0;background:#0008;z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.modal-panel{background:#fff;width:100%;max-width:760px;max-height:88vh;overflow:auto;border-radius:22px 22px 0 0;padding:20px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.modal-close{border:0;background:#eef2f7;border-radius:999px;width:42px;height:42px;font-size:22px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.detail{background:#f8fafc;border-radius:12px;padding:10px}.detail span{display:block;color:#667085;font-size:12px}.detail b{display:block;margin-top:3px;word-break:break-word}
+@media(max-width:520px){.detail-grid{grid-template-columns:1fr}}
+
 @media(max-width:520px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.metrics{grid-template-columns:1fr 1fr}.specialties{grid-template-columns:1fr}.btnrow{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3.4</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3.5</div></header>
 <main>
 <div class="nav">
 <button class="active" onclick="showPage('home',this)">🏠 ホーム</button>
@@ -109,9 +120,10 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 
 <div id="judgement" class="result"></div>
 <div class="btnrow">
-<button class="btn secondary" onclick="searchSold()">🔎 eBay Sold検索</button>
-<button class="btn primary" onclick="saveItem()">保存する</button>
+<button class="btn secondary" type="button" onclick="runJudge()">🧭 判定する</button>
+<button class="btn secondary" type="button" onclick="searchSold()">🔎 eBay Sold検索</button>
 </div>
+<button class="btn primary" type="button" style="width:100%;margin-top:10px" onclick="saveItem()">保存する</button>
 </div>
 </section>
 
@@ -133,6 +145,17 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <section id="history" class="hidden"><div class="card"><h2>📋 履歴</h2><div id="historyList"></div></div></section>
 <section id="settings" class="hidden"><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
+
+<div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
+  <div class="modal-panel" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h2 style="margin:0">📋 登録詳細</h2>
+      <button class="modal-close" type="button" onclick="closeDetail()">×</button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
 <div class="bottom"><button onclick="exportData()">💾 データ書出</button><button onclick="importData()">📥 読込</button></div>
 
 <script>
@@ -242,11 +265,64 @@ function updateJudge(){
  return {profit,sellRate,level,score,reasons,revenue,ebayFee};
 }
 document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
+function runJudge(){
+  try{
+    const r=updateJudge();
+    document.getElementById("judgement").scrollIntoView({behavior:"smooth",block:"center"});
+    return r;
+  }catch(e){
+    alert("判定処理でエラーが発生しました。入力内容を確認してください。");
+    console.error(e);
+  }
+}
 function saveItem(){
- const r=updateJudge();
- const x={time:new Date().toISOString(),mode,product:val("product"),keyword:val("keyword"),brand:val("brand"),sold:+val("sold"),active:+val("active"),saleUSD:+val("saleUSD"),cost:+val("costJPY"),ship:+val("shipJPY"),buyerShipUSD:+val("buyerShipUSD"),outShip:+val("outShipJPY"),tariff:+val("tariffJPY"),weight:+val("weight"),profit:Math.round(r.profit),level:r.level,score:r.score,partNumber:val("partNumber")};
+ const r=runJudge();
+ if(!r)return;
+ const x={
+   id:Date.now(),
+   time:new Date().toISOString(),
+   mode,
+   product:val("product"),
+   keyword:val("keyword"),
+   brand:val("brand"),
+   sold:+val("sold"),
+   active:+val("active"),
+   saleUSD:+val("saleUSD"),
+   buyerShipUSD:+val("buyerShipUSD"),
+   cost:+val("costJPY"),
+   ship:+val("shipJPY"),
+   outShip:+val("outShipJPY"),
+   tariff:+val("tariffJPY"),
+   weight:+val("weight"),
+   fx:+val("fx")||150,
+   feeRate:+val("feeRate")||15,
+   minProfit:+val("minProfit")||1000,
+   profit:Math.round(r.profit),
+   sellRate:r.sellRate,
+   level:r.level,
+   score:r.score,
+   reasons:r.reasons||[],
+   restriction:val("restriction"),
+   returnRisk:val("returnRisk"),
+   memo:val("memo"),
+   vehicle:{
+     maker:val("vehicleMaker"),
+     model:val("vehicleModel"),
+     year:val("year"),
+     generation:val("generation"),
+     partClass:val("partClass"),
+     conditionType:val("conditionType"),
+     partNumber:val("partNumber"),
+     fitment:val("fitment"),
+     usMarket:val("usMarket")
+   }
+ };
  if(!x.product){alert("商品名を入力してください");return}
- items.unshift(x);items=items.slice(0,300);localStorage.setItem("ebayItems",JSON.stringify(items));alert("保存しました");renderHome();
+ items.unshift(x);items=items.slice(0,300);
+ localStorage.setItem("ebayItems",JSON.stringify(items));
+ alert("保存しました");
+ renderHome();
+ renderHistory();
 }
 function searchSold(){
  const q=val("keyword")||val("product");if(!q){alert("eBay検索キーワードを入力してください");return}
@@ -258,9 +334,51 @@ function quickJudge(){
  document.getElementById("quickResult").innerHTML=`<div class="result ${level==="GO"?"go":level==="KEEP"?"keep":"stop"}><h2>${level==="GO"?"🟢 仕入れ候補":level==="KEEP"?"🟡 保留":"🔴 見送り"}</h2>利益目安 ¥${Math.round(profit).toLocaleString()} / 回転率 ${rate.toFixed(1)}%</div>`;
 }
 function renderHistory(){
- const box=document.getElementById("historyList");const arr=items.filter(x=>x.mode===mode);
+ const box=document.getElementById("historyList");
+ const arr=items.filter(x=>x.mode===mode);
  if(!arr.length){box.innerHTML='<p class="small">まだ保存データがありません。</p>';return}
- box.innerHTML=arr.slice(0,50).map(x=>`<div class="result ${x.level==="GO"?"go":x.level==="KEEP"?"keep":"stop"}"><b>${x.level}　${x.product||"(商品名なし)"}</b><br><span class="small">${fields[x.mode]?.name||x.mode} / Sold ${x.sold} / 出品 ${x.active} / 利益 ¥${x.profit.toLocaleString()}</span></div>`).join("");
+ box.innerHTML=arr.slice(0,50).map((x,i)=>{
+   const cls=x.level==="GO"?"go":x.level==="KEEP"?"keep":"stop";
+   const label=x.level==="GO"?"🟢 仕入れ候補":x.level==="KEEP"?"🟡 保留":"🔴 見送り";
+   return `<div class="history-card">
+     <div class="result ${cls}" style="margin:0">
+       <b>${label}　${escapeHTML(x.product||"(商品名なし)")}</b><br>
+       <span class="small">${fields[x.mode]?.name||x.mode} / Sold ${x.sold||0} / 出品 ${x.active||0} / 利益 ¥${Number(x.profit||0).toLocaleString()}</span>
+     </div>
+     <button type="button" onclick="openDetail(${x.id||0},${i})">詳細を見る</button>
+   </div>`;
+ }).join("");
+}
+
+function escapeHTML(v){
+ return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+function openDetail(id,fallbackIndex){
+ const arr=items.filter(x=>x.mode===mode);
+ let x=items.find(v=>v.id===id);
+ if(!x)x=arr[fallbackIndex];
+ if(!x)return;
+ const v=x.vehicle||{};
+ const level=x.level==="GO"?"🟢 仕入れ候補":x.level==="KEEP"?"🟡 保留・追加調査":"🔴 見送り";
+ const rows=[
+   ["商品名",x.product],["判定",level],["登録日時",x.time?new Date(x.time).toLocaleString("ja-JP"):""],
+   ["検索キーワード",x.keyword],["ブランド",x.brand],["メーカー",v.maker],["車種",v.model],
+   ["年式",v.year],["世代 / 型式",v.generation],["部品分類",v.partClass],["状態",v.conditionType],
+   ["OEM / Part Number",v.partNumber],["適合",v.fitment],["US市場",v.usMarket],
+   ["Sold数",x.sold],["現在出品数",x.active],["販売価格 USD",x.saleUSD],
+   ["購入者送料 USD",x.buyerShipUSD],["仕入価格 円",x.cost],["仕入先送料 円",x.ship],
+   ["海外発送送料 円",x.outShip],["関税・税 円",x.tariff],["重量 g",x.weight],
+   ["為替",x.fx],["手数料率 %",x.feeRate],["推定利益 円",x.profit],
+   ["回転率目安",Number(x.sellRate||0).toFixed(1)+"%"],["メーカー規制",x.restriction],
+   ["返品リスク",x.returnRisk],["メモ",x.memo]
+ ];
+ document.getElementById("detailBody").innerHTML=
+   `<div class="detail-grid">${rows.map(r=>`<div class="detail"><span>${escapeHTML(r[0])}</span><b>${escapeHTML(r[1]??"")}</b></div>`).join("")}</div>`;
+ document.getElementById("detailModal").classList.remove("hidden");
+}
+function closeDetail(e){
+ if(e && e.target && e.target.id!=="detailModal")return;
+ document.getElementById("detailModal").classList.add("hidden");
 }
 function exportData(){const blob=new Blob([JSON.stringify(items,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="ebay-research-data.json";a.click()}
 function importData(){const i=document.createElement("input");i.type="file";i.accept=".json";i.onchange=()=>{const r=new FileReader();r.onload=()=>{try{items=JSON.parse(r.result);localStorage.setItem("ebayItems",JSON.stringify(items));renderHome();alert("読み込みました")}catch(e){alert("JSONを読み込めませんでした")}};r.readAsText(i.files[0])};i.click()}
