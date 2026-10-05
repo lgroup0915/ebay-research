@@ -314,59 +314,281 @@ function runJudge(){
   }
 }
 function saveItem(){
- const r=runJudge();
- if(!r)return;
 
- const x={
-   id:Date.now(),
-   time:new Date().toISOString(),
-   mode,
-   product:val("product"),
-   keyword:val("keyword"),
-   brand:val("brand"),
-   sold:+val("sold"),
-   active:+val("active"),
-   saleUSD:+val("saleUSD"),
-   buyerShipUSD:+val("buyerShipUSD"),
-   cost:+val("costJPY"),
-   ship:+val("shipJPY"),
-   outShip:+val("outShipJPY"),
-   tariff:+val("tariffJPY"),
-   weight:+val("weight"),
-   fx:+val("fx")||150,
-   feeRate:+val("feeRate")||15,
-   minProfit:+val("minProfit")||1000,
-   profit:Math.round(r.profit),
-   sellRate:r.sellRate,
-   level:r.level,
-   score:r.score,
-   reasons:r.reasons||[],
-   restriction:val("restriction"),
-   returnRisk:val("returnRisk"),
-   memo:val("memo"),
+  const r=runJudge();
 
-   vehicle:{
-     maker:val("vehicleMaker"),
-     model:val("vehicleModel"),
-     year:val("year"),
-     generation:val("generation"),
-     partClass:val("partClass"),
-     conditionType:val("conditionType"),
-     partNumber:val("partNumber"),
-     fitment:val("fitment"),
-     usMarket:val("usMarket")
-   }
- };
+  if(!r)return;
 
- items.unshift(x);
- localStorage.setItem("ebayItems",JSON.stringify(items));
 
- alert("保存しました");
+  const x={
 
- showPage(
-   "history",
-   document.querySelector('.nav button[data-page="history"]')
- );
+    id:
+      window.editingId ||
+      Date.now(),
+
+    time:
+      new Date().toISOString(),
+
+    mode:mode,
+
+
+    /* =========================
+       商品基本情報
+    ========================= */
+
+    product:val("product"),
+
+    keyword:val("keyword"),
+
+    brand:val("brand"),
+
+
+    /* =========================
+       eBayリサーチ情報
+    ========================= */
+
+    sold:
+      Number(val("sold"))||0,
+
+    active:
+      Number(val("active"))||0,
+
+    saleUSD:
+      Number(val("saleUSD"))||0,
+
+    buyerShipUSD:
+      Number(val("buyerShipUSD"))||0,
+
+
+    /* =========================
+       日本仕入・発送
+    ========================= */
+
+    cost:
+      Number(val("costJPY"))||0,
+
+    ship:
+      Number(val("shipJPY"))||0,
+
+    outShip:
+      Number(val("outShipJPY"))||0,
+
+    tariff:
+      Number(val("tariffJPY"))||0,
+
+    weight:
+      Number(val("weight"))||0,
+
+
+    /* =========================
+       計算条件
+    ========================= */
+
+    fx:
+      Number(val("fx"))||150,
+
+    feeRate:
+      Number(val("feeRate"))||15,
+
+    minProfit:
+      Number(val("minProfit"))||1000,
+
+
+    /* =========================
+       自動判定結果
+    ========================= */
+
+    profit:
+      Math.round(r.profit),
+
+    sellRate:
+      r.sellRate,
+
+    level:
+      r.level,
+
+    score:
+      r.score,
+
+    reasons:
+      Array.isArray(r.reasons)
+        ? r.reasons
+        : [],
+
+
+    /* =========================
+       リスク
+    ========================= */
+
+    restriction:
+      val("restriction"),
+
+    returnRisk:
+      val("returnRisk"),
+
+    memo:
+      val("memo"),
+
+
+    /* =========================
+       🚗 車両・部品情報
+    ========================= */
+
+    vehicle:{
+
+      maker:
+        val("vehicleMaker"),
+
+      model:
+        val("vehicleModel"),
+
+      year:
+        val("year"),
+
+      generation:
+        val("generation"),
+
+      partClass:
+        val("partClass"),
+
+      conditionType:
+        val("conditionType"),
+
+      partNumber:
+        val("partNumber"),
+
+      fitment:
+        val("fitment"),
+
+      usMarket:
+        val("usMarket")
+
+    }
+
+  };
+
+
+  /* 商品名だけは必須 */
+
+  if(!x.product){
+
+    alert(
+      "商品名を入力してください。"
+    );
+
+    return;
+
+  }
+
+
+  /* =========================
+     新規登録 / 編集更新
+  ========================= */
+
+  if(window.editingId){
+
+    const index=
+      items.findIndex(
+        item =>
+          item.id===window.editingId
+      );
+
+
+    if(index>=0){
+
+      /*
+       以前の登録日時を残したいので
+       元データと結合
+      */
+
+      const old=
+        items[index];
+
+
+      items[index]={
+
+        ...old,
+
+        ...x,
+
+        id:old.id,
+
+        createdAt:
+          old.createdAt ||
+          old.time,
+
+        updatedAt:
+          new Date().toISOString()
+
+      };
+
+    }
+
+
+    window.editingId=null;
+
+
+    alert(
+      "登録内容を更新しました。"
+    );
+
+  }else{
+
+
+    x.createdAt=
+      x.time;
+
+
+    x.updatedAt=
+      x.time;
+
+
+    items.unshift(x);
+
+
+    alert(
+      "商品を登録しました。"
+    );
+
+  }
+
+
+  /* 最大300件 */
+
+  items=
+    items.slice(0,300);
+
+
+  /* 保存 */
+
+  localStorage.setItem(
+
+    "ebayItems",
+
+    JSON.stringify(items)
+
+  );
+
+
+  /* 画面更新 */
+
+  renderHome();
+
+  renderHistory();
+
+
+  /* 履歴画面へ */
+
+  showPage(
+
+    "history",
+
+    document.querySelector(
+      '.nav button[data-page="history"]'
+    )
+
+  );
+
 }
 function quickJudge(){
   try{
