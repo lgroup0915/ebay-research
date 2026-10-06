@@ -268,7 +268,7 @@ function quickJudge(){
     "スコア: "+score+"/7";
 }
 function searchSold(){
-  const keyword=val("qField") || val("qProduct");
+  const keyword=val("qProduct") || val("qField");
   if(!keyword) return;
 
   const url=
