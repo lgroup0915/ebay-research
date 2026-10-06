@@ -173,8 +173,7 @@ misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"
 };
 const APP_VERSION="v3.8";
 let editingId=null;
-mode=localStorage.getItem("ebayMode")||"motors";
-if(!fields[mode]) mode="motors";
+let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
 try{
   const raw=localStorage.getItem("ebayItems");
@@ -1227,9 +1226,7 @@ function importData(){
 ========================= */
 renderHome();
 syncMode();
-showPage("home",
-document.querySelector('.nav 
-button[data-page="home"]' ));
+showPage("home",document.querySelector('.nav button[data-page="home"]'));
 </script>
 </body>
 </html>
