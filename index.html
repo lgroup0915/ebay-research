@@ -139,6 +139,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <div class="field"><label>仕入価格 円</label><input id="qCost" type="number" value="0"></div>
 </div>
 <button id="quickJudgeBtn" class="btn primary" type="button" style="width:100%;margin-top:8px">🧭 判定する</button>
+<button id="quickSoldBtn" class="btn" type="button" style="width:100%;margin-top:8px">🔎 eBay Sold検索</button>
 <div id="quickResult" aria-live="polite"></div>
 </div>
 </section>
@@ -343,6 +344,8 @@ function bindAppEvents(){
  });
  const quickBtn=document.getElementById("quickJudgeBtn");
  if(quickBtn) quickBtn.addEventListener("click",quickJudge);
+ const quickSoldBtn=document.getElementById("quickSoldBtn");
+ if(quickSoldBtn) quickSoldBtn.addEventListener("click",searchSold);
  const runBtn=document.querySelector('#register button[onclick="runJudge()"]');
  if(runBtn){runBtn.removeAttribute("onclick");runBtn.addEventListener("click",runJudge);}
  const saveBtn=document.querySelector('#register button[onclick="saveItem()"]');
