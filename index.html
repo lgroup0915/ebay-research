@@ -715,8 +715,6 @@ function renderHistory(){
     `;
   }).join("");
 }
-
-
 function showDetail(index){
 
   const x=items[index];
@@ -725,107 +723,587 @@ function showDetail(index){
 
   const vehicle=x.vehicle||{};
 
-  const modeName=fields[x.mode]?.name||x.mode||"不明";
+  const modeName=
+    fields[x.mode]?.name ||
+    x.mode ||
+    "不明";
 
   const levelLabel=
-    x.level==="GO"?"🟢 仕入れ候補":
-    x.level==="KEEP"?"🟡 保留・追加調査":
-    "🔴 見送り";
+    x.level==="GO"
+      ?"🟢 仕入れ候補":
+    x.level==="KEEP"
+      ?"🟡 保留・追加調査":
+      "🔴 見送り";
+
 
   document.getElementById("detailBody").innerHTML=`
 
     <div class="result ${
-      x.level==="GO"?"go":
-      x.level==="KEEP"?"keep":"stop"
+      x.level==="GO"
+        ?"go":
+      x.level==="KEEP"
+        ?"keep":
+        "stop"
     }">
 
       <h2>${levelLabel}</h2>
 
       <div>
         推定利益：
-        <b>¥${Number(x.profit||0).toLocaleString()}</b>
+        <b>
+          ¥${Number(x.profit||0).toLocaleString()}
+        </b>
       </div>
 
       <div style="margin-top:5px">
         回転率：
-        <b>${Number(x.sellRate||0).toFixed(1)}%</b>
+        <b>
+          ${Number(x.sellRate||0).toFixed(1)}%
+        </b>
       </div>
 
     </div>
 
-    <div class="sectionTitle">📦 商品情報</div>
+
+    <div class="btnrow">
+
+      <button
+        class="btn primary"
+        type="button"
+        onclick="editItem(${index})"
+      >
+        ✏️ 編集
+      </button>
+
+      <button
+        class="btn secondary"
+        type="button"
+        onclick="deleteItem(${index})"
+      >
+        🗑️ 削除
+      </button>
+
+    </div>
+
+
+    <div class="sectionTitle">
+      📦 商品情報
+    </div>
 
     <div class="detail-grid">
 
       ${detailItem("商品名",x.product)}
-      ${detailItem("eBay検索",x.keyword)}
-      ${detailItem("メーカー/ブランド",x.brand)}
-      ${detailItem("専門分野",modeName)}
+
+      ${detailItem(
+        "eBay検索",
+        x.keyword
+      )}
+
+      ${detailItem(
+        "メーカー/ブランド",
+        x.brand
+      )}
+
+      ${detailItem(
+        "専門分野",
+        modeName
+      )}
 
     </div>
 
 
-    <div class="sectionTitle">🚗 車両・部品情報</div>
+    <div class="sectionTitle">
+      🚗 車両・部品情報
+    </div>
 
     <div class="detail-grid">
 
-      ${detailItem("メーカー",vehicle.maker)}
-      ${detailItem("車種",vehicle.model)}
-      ${detailItem("年式",vehicle.year)}
-      ${detailItem("世代/型式",vehicle.generation)}
-      ${detailItem("部品分類",vehicle.partClass)}
-      ${detailItem("状態",vehicle.conditionType)}
-      ${detailItem("OEM/Part Number",vehicle.partNumber)}
-      ${detailItem("適合確認",vehicle.fitment)}
-      ${detailItem("US市場",vehicle.usMarket)}
+      ${detailItem(
+        "メーカー",
+        vehicle.maker
+      )}
+
+      ${detailItem(
+        "車種",
+        vehicle.model
+      )}
+
+      ${detailItem(
+        "年式",
+        vehicle.year
+      )}
+
+      ${detailItem(
+        "世代/型式",
+        vehicle.generation
+      )}
+
+      ${detailItem(
+        "部品分類",
+        vehicle.partClass
+      )}
+
+      ${detailItem(
+        "状態",
+        vehicle.conditionType
+      )}
+
+      ${detailItem(
+        "OEM/Part Number",
+        vehicle.partNumber
+      )}
+
+      ${detailItem(
+        "適合確認",
+        vehicle.fitment
+      )}
+
+      ${detailItem(
+        "US市場",
+        vehicle.usMarket
+      )}
 
     </div>
 
 
-    <div class="sectionTitle">📊 eBayデータ</div>
+    <div class="sectionTitle">
+      📊 eBayデータ
+    </div>
 
     <div class="detail-grid">
 
-      ${detailItem("Sold数",x.sold)}
-      ${detailItem("現在出品数",x.active)}
-      ${detailItem("販売価格 USD",x.saleUSD)}
-      ${detailItem("購入者送料 USD",x.buyerShipUSD)}
-      ${detailItem("日本仕入価格",`¥${Number(x.cost||0).toLocaleString()}`)}
-      ${detailItem("仕入先送料",`¥${Number(x.ship||0).toLocaleString()}`)}
-      ${detailItem("海外発送送料",`¥${Number(x.outShip||0).toLocaleString()}`)}
-      ${detailItem("関税・税",`¥${Number(x.tariff||0).toLocaleString()}`)}
-      ${detailItem("重量",`${x.weight||0} g`)}
-      ${detailItem("為替",`¥${x.fx||150}/USD`)}
+      ${detailItem(
+        "Sold数",
+        x.sold
+      )}
+
+      ${detailItem(
+        "現在出品数",
+        x.active
+      )}
+
+      ${detailItem(
+        "販売価格 USD",
+        x.saleUSD
+      )}
+
+      ${detailItem(
+        "購入者送料 USD",
+        x.buyerShipUSD
+      )}
+
+      ${detailItem(
+        "日本仕入価格",
+        `¥${Number(x.cost||0).toLocaleString()}`
+      )}
+
+      ${detailItem(
+        "仕入先送料",
+        `¥${Number(x.ship||0).toLocaleString()}`
+      )}
+
+      ${detailItem(
+        "海外発送送料",
+        `¥${Number(x.outShip||0).toLocaleString()}`
+      )}
+
+      ${detailItem(
+        "関税・税",
+        `¥${Number(x.tariff||0).toLocaleString()}`
+      )}
+
+      ${detailItem(
+        "重量",
+        `${x.weight||0} g`
+      )}
+
+      ${detailItem(
+        "為替",
+        `¥${x.fx||150}/USD`
+      )}
 
     </div>
 
 
-    <div class="sectionTitle">⚠️ リスク・判定</div>
+    <div class="sectionTitle">
+      ⚠️ リスク・判定
+    </div>
 
     <div class="detail-grid">
 
-      ${detailItem("メーカー規制",x.restriction)}
-      ${detailItem("返品リスク",x.returnRisk)}
-      ${detailItem("手数料率",`${x.feeRate||15}%`)}
-      ${detailItem("最低目標利益",`¥${Number(x.minProfit||1000).toLocaleString()}`)}
-      ${detailItem("判定スコア",x.score)}
-      ${detailItem("判定理由",(x.reasons||[]).join("・"))}
+      ${detailItem(
+        "メーカー規制",
+        x.restriction
+      )}
+
+      ${detailItem(
+        "返品リスク",
+        x.returnRisk
+      )}
+
+      ${detailItem(
+        "手数料率",
+        `${x.feeRate||15}%`
+      )}
+
+      ${detailItem(
+        "最低目標利益",
+        `¥${Number(
+          x.minProfit||1000
+        ).toLocaleString()}`
+      )}
+
+      ${detailItem(
+        "判定スコア",
+        x.score
+      )}
+
+      ${detailItem(
+        "判定理由",
+        (x.reasons||[]).join("・")
+      )}
 
     </div>
 
 
-    <div class="sectionTitle">📝 メモ</div>
+    <div class="sectionTitle">
+      📝 メモ
+    </div>
 
     <div class="result">
-      ${escapeHTML(x.memo||"メモなし")}
+      ${x.memo || "メモなし"}
+    </div>
+
+
+    <div class="sectionTitle">
+      🕒 登録情報
+    </div>
+
+    <div class="detail-grid">
+
+      ${detailItem(
+        "登録日時",
+        x.createdAt || x.time || ""
+      )}
+
+      ${detailItem(
+        "更新日時",
+        x.updatedAt || ""
+      )}
+
     </div>
 
   `;
 
-  document.getElementById("detailModal").classList.remove("hidden");
+
+  document
+    .getElementById("detailModal")
+    .classList.remove("hidden");
+
 }
 
 
+/* =========================
+   履歴を編集
+========================= */
+
+function editItem(index){
+
+  const x=items[index];
+
+  if(!x)return;
+
+
+  /*
+    編集対象IDを保持
+  */
+
+  window.editingId=x.id;
+
+
+  /*
+    分野を元の登録時に戻す
+  */
+
+  mode=
+    x.mode &&
+    fields[x.mode]
+      ?x.mode
+      :"motors";
+
+  localStorage.setItem(
+    "ebayMode",
+    mode
+  );
+
+
+  /*
+    登録画面へ切り替え
+  */
+
+  showPage(
+    "register",
+    document.querySelector(
+      '.nav button[data-page="register"]'
+    )
+  );
+
+
+  syncMode();
+
+
+  /*
+    入力欄へデータを復元
+  */
+
+  const setVal=(id,value)=>{
+
+    const el=
+      document.getElementById(id);
+
+    if(el){
+      el.value=
+        value===undefined ||
+        value===null
+          ?""
+          :value;
+    }
+
+  };
+
+
+  /* 商品情報 */
+
+  setVal(
+    "product",
+    x.product
+  );
+
+  setVal(
+    "keyword",
+    x.keyword
+  );
+
+  setVal(
+    "brand",
+    x.brand
+  );
+
+
+  /* 車両・部品情報 */
+
+  const vehicle=
+    x.vehicle||{};
+
+  setVal(
+    "vehicleMaker",
+    vehicle.maker
+  );
+
+  setVal(
+    "vehicleModel",
+    vehicle.model
+  );
+
+  setVal(
+    "year",
+    vehicle.year
+  );
+
+  setVal(
+    "generation",
+    vehicle.generation
+  );
+
+  setVal(
+    "partClass",
+    vehicle.partClass
+  );
+
+  setVal(
+    "conditionType",
+    vehicle.conditionType
+  );
+
+  setVal(
+    "partNumber",
+    vehicle.partNumber
+  );
+
+  setVal(
+    "fitment",
+    vehicle.fitment
+  );
+
+  setVal(
+    "usMarket",
+    vehicle.usMarket
+  );
+
+
+  /* eBayデータ */
+
+  setVal(
+    "sold",
+    x.sold
+  );
+
+  setVal(
+    "active",
+    x.active
+  );
+
+  setVal(
+    "saleUSD",
+    x.saleUSD
+  );
+
+  setVal(
+    "buyerShipUSD",
+    x.buyerShipUSD
+  );
+
+  setVal(
+    "costJPY",
+    x.cost
+  );
+
+  setVal(
+    "shipJPY",
+    x.ship
+  );
+
+  setVal(
+    "outShipJPY",
+    x.outShip
+  );
+
+  setVal(
+    "tariffJPY",
+    x.tariff
+  );
+
+  setVal(
+    "weight",
+    x.weight
+  );
+
+  setVal(
+    "fx",
+    x.fx||150
+  );
+
+
+  /* リスク */
+
+  setVal(
+    "restriction",
+    x.restriction
+  );
+
+  setVal(
+    "returnRisk",
+    x.returnRisk
+  );
+
+
+  /* メモ */
+
+  setVal(
+    "memo",
+    x.memo
+  );
+
+
+  /* 判定条件 */
+
+  setVal(
+    "feeRate",
+    x.feeRate||15
+  );
+
+  setVal(
+    "minProfit",
+    x.minProfit||1000
+  );
+
+
+  /*
+    更新後の判定を表示
+  */
+
+  updateJudge();
+
+
+  /*
+    保存ボタンを「更新保存」に変更
+  */
+
+  const saveBtn=
+    document.querySelector(
+      '#register button[onclick="saveItem()"]'
+    );
+
+  if(saveBtn){
+
+    saveBtn.textContent=
+      "💾 更新保存";
+
+  }
+
+}
+
+
+/* =========================
+   履歴削除
+========================= */
+
+function deleteItem(index){
+
+  const x=items[index];
+
+  if(!x)return;
+
+
+  const name=
+    x.product ||
+    "この商品";
+
+
+  const ok=
+    confirm(
+      "「"+name+
+      "」を履歴から削除しますか？"
+    );
+
+
+  if(!ok)return;
+
+
+  items.splice(
+    index,
+    1
+  );
+
+
+  localStorage.setItem(
+    "ebayItems",
+    JSON.stringify(items)
+  );
+
+
+  closeDetail();
+
+  renderHistory();
+
+  renderHome();
+
+
+  alert(
+    "履歴を削除しました。"
+  );
+
+}
 function detailItem(label,value){
 
   return `
