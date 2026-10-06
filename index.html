@@ -316,405 +316,105 @@ function runJudge(){
 function saveItem(){
 
   const r=runJudge();
-
   if(!r)return;
 
-
   const x={
+    id:editingId||Date.now(),
+    time:editingId
+      ? (items.find(i=>i.id===editingId)?.time||new Date().toISOString())
+      : new Date().toISOString(),
 
-    id:
-      window.editingId ||
-      Date.now(),
-
-    time:
-      new Date().toISOString(),
-
-    mode:mode,
-
-
-    /* =========================
-       商品基本情報
-    ========================= */
+    mode,
 
     product:val("product"),
-
     keyword:val("keyword"),
-
     brand:val("brand"),
 
+    sold:+val("sold"),
+    active:+val("active"),
+    saleUSD:+val("saleUSD"),
+    buyerShipUSD:+val("buyerShipUSD"),
 
-    /* =========================
-       eBayリサーチ情報
-    ========================= */
+    cost:+val("costJPY"),
+    ship:+val("shipJPY"),
+    outShip:+val("outShipJPY"),
+    tariff:+val("tariffJPY"),
 
-    sold:
-      Number(val("sold"))||0,
+    weight:+val("weight"),
+    fx:+val("fx")||150,
 
-    active:
-      Number(val("active"))||0,
+    feeRate:+val("feeRate")||15,
+    minProfit:+val("minProfit")||1000,
 
-    saleUSD:
-      Number(val("saleUSD"))||0,
+    profit:Math.round(r.profit),
+    sellRate:r.sellRate,
+    level:r.level,
+    score:r.score,
+    reasons:r.reasons||[],
 
-    buyerShipUSD:
-      Number(val("buyerShipUSD"))||0,
-
-
-    /* =========================
-       日本仕入・発送
-    ========================= */
-
-    cost:
-      Number(val("costJPY"))||0,
-
-    ship:
-      Number(val("shipJPY"))||0,
-
-    outShip:
-      Number(val("outShipJPY"))||0,
-
-    tariff:
-      Number(val("tariffJPY"))||0,
-
-    weight:
-      Number(val("weight"))||0,
-
-
-    /* =========================
-       計算条件
-    ========================= */
-
-    fx:
-      Number(val("fx"))||150,
-
-    feeRate:
-      Number(val("feeRate"))||15,
-
-    minProfit:
-      Number(val("minProfit"))||1000,
-
-
-    /* =========================
-       自動判定結果
-    ========================= */
-
-    profit:
-      Math.round(r.profit),
-
-    sellRate:
-      r.sellRate,
-
-    level:
-      r.level,
-
-    score:
-      r.score,
-
-    reasons:
-      Array.isArray(r.reasons)
-        ? r.reasons
-        : [],
-
-
-    /* =========================
-       リスク
-    ========================= */
-
-    restriction:
-      val("restriction"),
-
-    returnRisk:
-      val("returnRisk"),
-
-    memo:
-      val("memo"),
-
-
-    /* =========================
-       🚗 車両・部品情報
-    ========================= */
+    restriction:val("restriction"),
+    returnRisk:val("returnRisk"),
+    memo:val("memo"),
 
     vehicle:{
-
-      maker:
-        val("vehicleMaker"),
-
-      model:
-        val("vehicleModel"),
-
-      year:
-        val("year"),
-
-      generation:
-        val("generation"),
-
-      partClass:
-        val("partClass"),
-
-      conditionType:
-        val("conditionType"),
-
-      partNumber:
-        val("partNumber"),
-
-      fitment:
-        val("fitment"),
-
-      usMarket:
-        val("usMarket")
-
+      maker:val("vehicleMaker"),
+      model:val("vehicleModel"),
+      year:val("year"),
+      generation:val("generation"),
+      partClass:val("partClass"),
+      conditionType:val("conditionType"),
+      partNumber:val("partNumber"),
+      fitment:val("fitment"),
+      usMarket:val("usMarket")
     }
-
   };
 
 
-  /* 商品名だけは必須 */
+  /* 編集の場合は元データを上書き */
+  if(editingId){
 
-  if(!x.product){
+    const index=items.findIndex(i=>i.id===editingId);
 
-    alert(
-      "商品名を入力してください。"
-    );
-
-    return;
-
-  }
-
-
-  /* =========================
-     新規登録 / 編集更新
-  ========================= */
-
-  if(window.editingId){
-
-    const index=
-      items.findIndex(
-        item =>
-          item.id===window.editingId
-      );
-
-
-    if(index>=0){
-
-      /*
-       以前の登録日時を残したいので
-       元データと結合
-      */
-
-      const old=
-        items[index];
-
-
-      items[index]={
-
-        ...old,
-
-        ...x,
-
-        id:old.id,
-
-        createdAt:
-          old.createdAt ||
-          old.time,
-
-        updatedAt:
-          new Date().toISOString()
-
-      };
-
+    if(index!==-1){
+      items[index]=x;
     }
 
+    editingId=null;
 
-    window.editingId=null;
-
-
-    alert(
-      "登録内容を更新しました。"
+    localStorage.setItem(
+      "ebayItems",
+      JSON.stringify(items)
     );
+
+    alert("登録内容を更新しました。");
 
   }else{
 
-
-    x.createdAt=
-      x.time;
-
-
-    x.updatedAt=
-      x.time;
-
-
+    /* 新規登録 */
     items.unshift(x);
 
-
-    alert(
-      "商品を登録しました。"
+    localStorage.setItem(
+      "ebayItems",
+      JSON.stringify(items)
     );
 
+    alert("保存しました。");
   }
 
 
-  /* 最大300件 */
-
-  items=
-    items.slice(0,300);
-
-
-  /* 保存 */
-
-  localStorage.setItem(
-
-    "ebayItems",
-
-    JSON.stringify(items)
-
-  );
-
-
-  /* 画面更新 */
-
-  renderHome();
-
-  renderHistory();
-
-
-  /* 履歴画面へ */
-
   showPage(
-
     "history",
-
     document.querySelector(
       '.nav button[data-page="history"]'
     )
-
   );
-
-}
-function quickJudge(){
-  try{
-    const sold=Number(val("qSold"))||0;
-    const active=Number(val("qActive"))||0;
-    const sale=Number(val("qSale"))||0;
-    const cost=Number(val("qCost"))||0;
-    const fx=Number(val("fx"))||150;
-    const fee=Number(val("feeRate"))||15;
-
-    const revenue=sale*fx;
-    const ebayFee=revenue*(fee/100);
-    const profit=revenue-ebayFee-cost;
-
-    const total=sold+active;
-    const sellRate=total>0?sold/total*100:0;
-
-    const selectedMode=val("qField")||mode;
-    const goal=fields[selectedMode]?.goal||1000;
-
-    let level="STOP";
-    let label="🔴 見送り";
-
-    if(profit>=goal && sold>=10 && sellRate>=30){
-      level="GO";
-      label="🟢 仕入れ候補";
-    }else if(profit>=1000 && sold>=3 && sellRate>=10){
-      level="KEEP";
-      label="🟡 保留・追加調査";
-    }
-
-    const box=document.getElementById("quickResult");
-
-    box.innerHTML=`
-      <div class="result ${
-        level==="GO"?"go":level==="KEEP"?"keep":"stop"
-      }">
-        <h2>🧭 ${label}</h2>
-
-        <div class="metrics">
-          <div class="metric">
-            <span>推定利益</span>
-            <b>¥${Math.round(profit).toLocaleString()}</b>
-          </div>
-
-          <div class="metric">
-            <span>回転率目安</span>
-            <b>${sellRate.toFixed(1)}%</b>
-          </div>
-
-          <div class="metric">
-            <span>Sold</span>
-            <b>${sold}</b>
-          </div>
-        </div>
-
-        <div class="small" style="margin-top:10px">
-          目標利益：¥${goal.toLocaleString()}
-        </div>
-      </div>
-    `;
-
-  }catch(e){
-    console.error(e);
-    alert("5分判定でエラーが発生しました。");
-  }
 }
 
 
-function renderHistory(){
+/* =========================
+   履歴詳細表示
+========================= */
 
-  const box=document.getElementById("historyList");
-
-  if(!box)return;
-
-  if(!items.length){
-    box.innerHTML=`
-      <div class="result keep">
-        📋 まだ登録履歴がありません。
-      </div>
-    `;
-    return;
-  }
-
-  box.innerHTML=items.map((x,i)=>{
-
-    const modeName=fields[x.mode]?.name||x.mode||"不明";
-
-    const levelLabel=
-      x.level==="GO"?"🟢 仕入れ候補":
-      x.level==="KEEP"?"🟡 保留":
-      "🔴 見送り";
-
-    const date=x.time?
-      new Date(x.time).toLocaleString("ja-JP"):
-      "";
-
-    return `
-      <div class="history-card">
-
-        <h3 style="margin:0 0 6px">
-          ${escapeHTML(x.product||"商品名未入力")}
-        </h3>
-
-        <div class="small">
-          ${modeName} ／ ${date}
-        </div>
-
-        <div style="margin-top:8px;font-weight:800">
-          ${levelLabel}
-        </div>
-
-        <div class="small" style="margin-top:6px">
-          利益：¥${Number(x.profit||0).toLocaleString()}
-          ／ Sold：${x.sold||0}
-          ／ 出品：${x.active||0}
-        </div>
-
-        <button type="button" onclick="showDetail(${i})">
-          📋 登録詳細を見る
-        </button>
-
-      </div>
-    `;
-  }).join("");
-}
 function showDetail(index){
 
   const x=items[index];
@@ -730,58 +430,38 @@ function showDetail(index){
 
   const levelLabel=
     x.level==="GO"
-      ?"🟢 仕入れ候補":
-    x.level==="KEEP"
-      ?"🟡 保留・追加調査":
-      "🔴 見送り";
+      ?"🟢 仕入れ候補"
+      :x.level==="KEEP"
+        ?"🟡 保留・追加調査"
+        :"🔴 見送り";
 
 
   document.getElementById("detailBody").innerHTML=`
 
     <div class="result ${
       x.level==="GO"
-        ?"go":
-      x.level==="KEEP"
-        ?"keep":
-        "stop"
+        ?"go"
+        :x.level==="KEEP"
+          ?"keep"
+          :"stop"
     }">
 
       <h2>${levelLabel}</h2>
 
       <div>
         推定利益：
-        <b>
-          ¥${Number(x.profit||0).toLocaleString()}
-        </b>
+        <b>¥${Number(x.profit||0).toLocaleString()}</b>
       </div>
 
       <div style="margin-top:5px">
         回転率：
-        <b>
-          ${Number(x.sellRate||0).toFixed(1)}%
-        </b>
+        <b>${Number(x.sellRate||0).toFixed(1)}%</b>
       </div>
 
-    </div>
-
-
-    <div class="btnrow">
-
-      <button
-        class="btn primary"
-        type="button"
-        onclick="editItem(${index})"
-      >
-        ✏️ 編集
-      </button>
-
-      <button
-        class="btn secondary"
-        type="button"
-        onclick="deleteItem(${index})"
-      >
-        🗑️ 削除
-      </button>
+      <div style="margin-top:5px">
+        判定スコア：
+        <b>${Number(x.score||0)}</b>
+      </div>
 
     </div>
 
@@ -793,21 +473,9 @@ function showDetail(index){
     <div class="detail-grid">
 
       ${detailItem("商品名",x.product)}
-
-      ${detailItem(
-        "eBay検索",
-        x.keyword
-      )}
-
-      ${detailItem(
-        "メーカー/ブランド",
-        x.brand
-      )}
-
-      ${detailItem(
-        "専門分野",
-        modeName
-      )}
+      ${detailItem("eBay検索",x.keyword)}
+      ${detailItem("メーカー/ブランド",x.brand)}
+      ${detailItem("専門分野",modeName)}
 
     </div>
 
@@ -818,50 +486,15 @@ function showDetail(index){
 
     <div class="detail-grid">
 
-      ${detailItem(
-        "メーカー",
-        vehicle.maker
-      )}
-
-      ${detailItem(
-        "車種",
-        vehicle.model
-      )}
-
-      ${detailItem(
-        "年式",
-        vehicle.year
-      )}
-
-      ${detailItem(
-        "世代/型式",
-        vehicle.generation
-      )}
-
-      ${detailItem(
-        "部品分類",
-        vehicle.partClass
-      )}
-
-      ${detailItem(
-        "状態",
-        vehicle.conditionType
-      )}
-
-      ${detailItem(
-        "OEM/Part Number",
-        vehicle.partNumber
-      )}
-
-      ${detailItem(
-        "適合確認",
-        vehicle.fitment
-      )}
-
-      ${detailItem(
-        "US市場",
-        vehicle.usMarket
-      )}
+      ${detailItem("メーカー",vehicle.maker)}
+      ${detailItem("車種",vehicle.model)}
+      ${detailItem("年式",vehicle.year)}
+      ${detailItem("世代/型式",vehicle.generation)}
+      ${detailItem("部品分類",vehicle.partClass)}
+      ${detailItem("状態",vehicle.conditionType)}
+      ${detailItem("OEM/Part Number",vehicle.partNumber)}
+      ${detailItem("適合確認",vehicle.fitment)}
+      ${detailItem("US市場",vehicle.usMarket)}
 
     </div>
 
@@ -872,54 +505,39 @@ function showDetail(index){
 
     <div class="detail-grid">
 
-      ${detailItem(
-        "Sold数",
-        x.sold
-      )}
-
-      ${detailItem(
-        "現在出品数",
-        x.active
-      )}
-
-      ${detailItem(
-        "販売価格 USD",
-        x.saleUSD
-      )}
-
-      ${detailItem(
-        "購入者送料 USD",
-        x.buyerShipUSD
-      )}
+      ${detailItem("Sold数",x.sold)}
+      ${detailItem("現在出品数",x.active)}
+      ${detailItem("販売価格 USD",x.saleUSD)}
+      ${detailItem("購入者送料 USD",x.buyerShipUSD)}
 
       ${detailItem(
         "日本仕入価格",
-        `¥${Number(x.cost||0).toLocaleString()}`
+        "¥"+Number(x.cost||0).toLocaleString()
       )}
 
       ${detailItem(
         "仕入先送料",
-        `¥${Number(x.ship||0).toLocaleString()}`
+        "¥"+Number(x.ship||0).toLocaleString()
       )}
 
       ${detailItem(
         "海外発送送料",
-        `¥${Number(x.outShip||0).toLocaleString()}`
+        "¥"+Number(x.outShip||0).toLocaleString()
       )}
 
       ${detailItem(
         "関税・税",
-        `¥${Number(x.tariff||0).toLocaleString()}`
+        "¥"+Number(x.tariff||0).toLocaleString()
       )}
 
       ${detailItem(
         "重量",
-        `${x.weight||0} g`
+        (x.weight||0)+" g"
       )}
 
       ${detailItem(
         "為替",
-        `¥${x.fx||150}/USD`
+        "¥"+(x.fx||150)+"/USD"
       )}
 
     </div>
@@ -943,14 +561,14 @@ function showDetail(index){
 
       ${detailItem(
         "手数料率",
-        `${x.feeRate||15}%`
+        (x.feeRate||15)+"%"
       )}
 
       ${detailItem(
         "最低目標利益",
-        `¥${Number(
+        "¥"+Number(
           x.minProfit||1000
-        ).toLocaleString()}`
+        ).toLocaleString()
       )}
 
       ${detailItem(
@@ -970,26 +588,26 @@ function showDetail(index){
       📝 メモ
     </div>
 
-    <div class="result">
-      ${x.memo || "メモなし"}
+    <div class="detail">
+      ${esc(x.memo||"")}
     </div>
 
 
-    <div class="sectionTitle">
-      🕒 登録情報
-    </div>
+    <div class="btnrow" style="margin-top:18px">
 
-    <div class="detail-grid">
+      <button
+        class="btn primary"
+        type="button"
+        onclick="editItem(${index})">
+        ✏️ 編集
+      </button>
 
-      ${detailItem(
-        "登録日時",
-        x.createdAt || x.time || ""
-      )}
-
-      ${detailItem(
-        "更新日時",
-        x.updatedAt || ""
-      )}
+      <button
+        class="btn secondary"
+        type="button"
+        onclick="deleteItem(${index})">
+        🗑️ 削除
+      </button>
 
     </div>
 
@@ -999,7 +617,57 @@ function showDetail(index){
   document
     .getElementById("detailModal")
     .classList.remove("hidden");
+}
 
+
+/* =========================
+   詳細項目表示
+========================= */
+
+function detailItem(label,value){
+
+  return `
+    <div class="detail">
+
+      <span>${esc(label)}</span>
+
+      <b>${esc(
+        value===undefined ||
+        value===null ||
+        value===""
+          ?"未入力"
+          :String(value)
+      )}</b>
+
+    </div>
+  `;
+}
+
+
+/* =========================
+   HTMLエスケープ
+========================= */
+
+function esc(value){
+
+  return String(value??"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+
+/* =========================
+   詳細を閉じる
+========================= */
+
+function closeDetail(){
+
+  document
+    .getElementById("detailModal")
+    .classList.add("hidden");
 }
 
 
@@ -1014,32 +682,23 @@ function editItem(index){
   if(!x)return;
 
 
-  /*
-    編集対象IDを保持
-  */
-
-  window.editingId=x.id;
+  /* 編集中IDを記憶 */
+  editingId=x.id;
 
 
-  /*
-    分野を元の登録時に戻す
-  */
+  /* 専門分野 */
+  if(fields[x.mode]){
 
-  mode=
-    x.mode &&
-    fields[x.mode]
-      ?x.mode
-      :"motors";
+    mode=x.mode;
 
-  localStorage.setItem(
-    "ebayMode",
-    mode
-  );
+    localStorage.setItem(
+      "ebayMode",
+      mode
+    );
+  }
 
 
-  /*
-    登録画面へ切り替え
-  */
+  /* 登録画面へ移動 */
 
   showPage(
     "register",
@@ -1049,149 +708,32 @@ function editItem(index){
   );
 
 
+  /* モードを同期 */
+
   syncMode();
-
-
-  /*
-    入力欄へデータを復元
-  */
-
-  const setVal=(id,value)=>{
-
-    const el=
-      document.getElementById(id);
-
-    if(el){
-      el.value=
-        value===undefined ||
-        value===null
-          ?""
-          :value;
-    }
-
-  };
 
 
   /* 商品情報 */
 
-  setVal(
-    "product",
-    x.product
-  );
-
-  setVal(
-    "keyword",
-    x.keyword
-  );
-
-  setVal(
-    "brand",
-    x.brand
-  );
-
-
-  /* 車両・部品情報 */
-
-  const vehicle=
-    x.vehicle||{};
-
-  setVal(
-    "vehicleMaker",
-    vehicle.maker
-  );
-
-  setVal(
-    "vehicleModel",
-    vehicle.model
-  );
-
-  setVal(
-    "year",
-    vehicle.year
-  );
-
-  setVal(
-    "generation",
-    vehicle.generation
-  );
-
-  setVal(
-    "partClass",
-    vehicle.partClass
-  );
-
-  setVal(
-    "conditionType",
-    vehicle.conditionType
-  );
-
-  setVal(
-    "partNumber",
-    vehicle.partNumber
-  );
-
-  setVal(
-    "fitment",
-    vehicle.fitment
-  );
-
-  setVal(
-    "usMarket",
-    vehicle.usMarket
-  );
+  setVal("product",x.product);
+  setVal("keyword",x.keyword);
+  setVal("brand",x.brand);
 
 
   /* eBayデータ */
 
-  setVal(
-    "sold",
-    x.sold
-  );
+  setVal("sold",x.sold);
+  setVal("active",x.active);
+  setVal("saleUSD",x.saleUSD);
+  setVal("buyerShipUSD",x.buyerShipUSD);
 
-  setVal(
-    "active",
-    x.active
-  );
+  setVal("costJPY",x.cost);
+  setVal("shipJPY",x.ship);
+  setVal("outShipJPY",x.outShip);
+  setVal("tariffJPY",x.tariff);
 
-  setVal(
-    "saleUSD",
-    x.saleUSD
-  );
-
-  setVal(
-    "buyerShipUSD",
-    x.buyerShipUSD
-  );
-
-  setVal(
-    "costJPY",
-    x.cost
-  );
-
-  setVal(
-    "shipJPY",
-    x.ship
-  );
-
-  setVal(
-    "outShipJPY",
-    x.outShip
-  );
-
-  setVal(
-    "tariffJPY",
-    x.tariff
-  );
-
-  setVal(
-    "weight",
-    x.weight
-  );
-
-  setVal(
-    "fx",
-    x.fx||150
-  );
+  setVal("weight",x.weight);
+  setVal("fx",x.fx||150);
 
 
   /* リスク */
@@ -1205,9 +747,6 @@ function editItem(index){
     "returnRisk",
     x.returnRisk
   );
-
-
-  /* メモ */
 
   setVal(
     "memo",
@@ -1228,29 +767,90 @@ function editItem(index){
   );
 
 
-  /*
-    更新後の判定を表示
-  */
+  /* 車両・部品情報 */
+
+  const v=x.vehicle||{};
+
+  setVal(
+    "vehicleMaker",
+    v.maker
+  );
+
+  setVal(
+    "vehicleModel",
+    v.model
+  );
+
+  setVal(
+    "year",
+    v.year
+  );
+
+  setVal(
+    "generation",
+    v.generation
+  );
+
+  setVal(
+    "partClass",
+    v.partClass
+  );
+
+  setVal(
+    "conditionType",
+    v.conditionType
+  );
+
+  setVal(
+    "partNumber",
+    v.partNumber
+  );
+
+  setVal(
+    "fitment",
+    v.fitment
+  );
+
+  setVal(
+    "usMarket",
+    v.usMarket
+  );
+
+
+  /* 判定を再計算 */
 
   updateJudge();
 
 
-  /*
-    保存ボタンを「更新保存」に変更
-  */
+  /* モーダルを閉じる */
 
-  const saveBtn=
-    document.querySelector(
-      '#register button[onclick="saveItem()"]'
-    );
+  closeDetail();
 
-  if(saveBtn){
 
-    saveBtn.textContent=
-      "💾 更新保存";
+  /* 登録画面上部へ */
 
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+}
+
+
+/* =========================
+   フォームへ値を入れる
+========================= */
+
+function setVal(id,value){
+
+  const el=document.getElementById(id);
+
+  if(el){
+    el.value=
+      value===undefined ||
+      value===null
+        ?""
+        :value;
   }
-
 }
 
 
@@ -1270,20 +870,17 @@ function deleteItem(index){
     "この商品";
 
 
-  const ok=
-    confirm(
-      "「"+name+
-      "」を履歴から削除しますか？"
-    );
+  const ok=confirm(
+    "「"+
+    name+
+    "」を履歴から削除しますか？"
+  );
 
 
   if(!ok)return;
 
 
-  items.splice(
-    index,
-    1
-  );
+  items.splice(index,1);
 
 
   localStorage.setItem(
@@ -1297,135 +894,256 @@ function deleteItem(index){
   renderHistory();
 
   renderHome();
-
-
-  alert(
-    "履歴を削除しました。"
-  );
-
-}
-function detailItem(label,value){
-
-  return `
-    <div class="detail">
-      <span>${escapeHTML(String(label))}</span>
-      <b>${escapeHTML(String(value??""))}</b>
-    </div>
-  `;
 }
 
 
-function escapeHTML(value){
+/* =========================
+   履歴表示
+========================= */
 
-  return String(value)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-}
+function renderHistory(){
 
+  const box=
+    document.getElementById(
+      "historyList"
+    );
 
-function closeDetail(){
-
-  const modal=document.getElementById("detailModal");
-
-  if(modal){
-    modal.classList.add("hidden");
-  }
-}
+  if(!box)return;
 
 
-function searchSold(){
+  if(!items.length){
 
-  const keyword=
-    val("keyword") ||
-    val("product");
-
-  if(!keyword){
-
-    alert("商品名またはeBay検索キーワードを入力してください。");
+    box.innerHTML=`
+      <div class="small">
+        まだ登録履歴がありません。
+      </div>
+    `;
 
     return;
   }
 
-  const url=
-    "https://www.ebay.com/sch/i.html?_nkw="+
-    encodeURIComponent(keyword)+
-    "&LH_Sold=1&LH_Complete=1";
 
-  window.open(url,"_blank");
+  box.innerHTML=
+    items.map((x,index)=>{
+
+      const levelLabel=
+        x.level==="GO"
+          ?"🟢 候補"
+          :x.level==="KEEP"
+            ?"🟡 保留"
+            :"🔴 見送り";
+
+
+      const modeName=
+        fields[x.mode]?.name ||
+        x.mode ||
+        "不明";
+
+
+      const date=x.time
+        ?new Date(x.time)
+          .toLocaleString("ja-JP")
+        :"日時不明";
+
+
+      return `
+
+        <div class="history-card">
+
+          <div style="
+            font-size:18px;
+            font-weight:800;
+          ">
+            ${esc(
+              x.product||
+              "商品名未入力"
+            )}
+          </div>
+
+
+          <div class="small"
+               style="margin-top:5px">
+            ${esc(modeName)}
+            ／ ${date}
+          </div>
+
+
+          <div style="
+            margin-top:8px;
+            font-weight:700;
+          ">
+            ${levelLabel}
+          </div>
+
+
+          <div style="
+            margin-top:5px;
+          ">
+            推定利益：
+            <b>
+              ¥${Number(
+                x.profit||0
+              ).toLocaleString()}
+            </b>
+          </div>
+
+
+          <div class="btnrow">
+
+            <button
+              class="btn secondary"
+              type="button"
+              onclick="showDetail(${index})">
+              📋 詳細
+            </button>
+
+            <button
+              class="btn primary"
+              type="button"
+              onclick="editItem(${index})">
+              ✏️ 編集
+            </button>
+
+          </div>
+
+
+          <button
+            class="btn secondary"
+            type="button"
+            style="
+              width:100%;
+              margin-top:10px;
+            "
+            onclick="deleteItem(${index})">
+            🗑️ 削除
+          </button>
+
+        </div>
+
+      `;
+
+    }).join("");
 }
 
 
+/* =========================
+   データ書き出し
+========================= */
+
 function exportData(){
 
-  const data=JSON.stringify(items,null,2);
-
   const blob=new Blob(
-    [data],
-    {type:"application/json"}
+    [
+      JSON.stringify(
+        items,
+        null,
+        2
+      )
+    ],
+    {
+      type:"application/json"
+    }
   );
 
-  const url=URL.createObjectURL(blob);
 
-  const a=document.createElement("a");
+  const url=
+    URL.createObjectURL(blob);
+
+
+  const a=
+    document.createElement("a");
+
 
   a.href=url;
+
   a.download=
     "ebay-research-backup-"+
-    new Date().toISOString().slice(0,10)+
+    new Date()
+      .toISOString()
+      .slice(0,10)+
     ".json";
 
+
+  document.body.appendChild(a);
+
   a.click();
+
+  a.remove();
 
   URL.revokeObjectURL(url);
 }
 
 
+/* =========================
+   データ読み込み
+========================= */
+
 function importData(){
 
-  const input=document.createElement("input");
+  const input=
+    document.createElement("input");
+
 
   input.type="file";
+
   input.accept=".json,application/json";
+
 
   input.onchange=function(){
 
-    const file=input.files[0];
+    const file=
+      input.files?.[0];
+
 
     if(!file)return;
 
-    const reader=new FileReader();
+
+    const reader=
+      new FileReader();
+
 
     reader.onload=function(){
 
       try{
 
-        const parsed=JSON.parse(reader.result);
+        const parsed=
+          JSON.parse(
+            reader.result
+          );
+
 
         if(!Array.isArray(parsed)){
-          throw new Error("データ形式が不正です");
+
+          throw new Error(
+            "データ形式が不正です"
+          );
         }
 
+
         items=parsed;
+
 
         localStorage.setItem(
           "ebayItems",
           JSON.stringify(items)
         );
 
+
         renderHome();
+
         renderHistory();
+
 
         alert(
           items.length+
           "件のデータを読み込みました。"
         );
 
+
       }catch(e){
 
         console.error(e);
+
 
         alert(
           "読み込みに失敗しました。"+
@@ -1436,15 +1154,30 @@ function importData(){
 
     };
 
+
     reader.readAsText(file);
 
   };
+
 
   input.click();
 }
 
 
-/* 起動時処理 */
+/* =========================
+   起動時処理
+========================= */
+
+renderHome();
+
+syncMode();
+
+showPage(
+  "home",
+  document.querySelector(
+    '.nav button[data-page="home"]'
+  )
+);
 renderHome();
 syncMode();
 showPage(
