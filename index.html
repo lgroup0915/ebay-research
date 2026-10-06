@@ -171,10 +171,10 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v3.7";
+const APP_VERSION="v3.8";
 let editingId=null;
 let
-let mode=localStorage.getItem("ebayMode")||"motors";
+mode=localStorage.getItem("ebayMode")||"motors";
 if(!fields[mode]) mode="motors";
 let items=[];
 try{
@@ -223,6 +223,63 @@ function syncMode(){
  updateJudge();
 }
 function val(id){return document.getElementById(id)?.value||""}
+function quickJudge(){
+  const product=val("qProduct");
+  const field=val("qField");
+  const sold=Number(val("qSold"))||0;
+  const active=Number(val("qActive"))||0;
+  const sale=Number(val("qSale"))||0;
+  const cost=Number(val("qCost"))||0;
+
+  const fx=150;
+  const feeRate=0.15;
+  const minProfit=1000;
+
+  const revenue=sale*fx;
+  const fee=revenue*feeRate;
+  const profit=revenue-fee-cost;
+  const sellRate=(sold+active)>0
+    ? sold/(sold+active)*100
+    : 0;
+
+  let score=0;
+
+  if(profit>=minProfit) score+=3;
+  else if(profit>=minProfit*0.7) score+=2;
+  else if(profit>=0) score+=1;
+
+  if(sold>=10) score+=2;
+  else if(sold>=3) score+=1;
+
+  if(sellRate>=30) score+=2;
+  else if(sellRate>=10) score+=1;
+
+  let level="STOP";
+  if(score>=6) level="GO";
+  else if(score>=3) level="KEEP";
+
+  const result=document.getElementById("quickResult");
+  if(!result) return;
+
+  result.innerHTML=
+    "<b>"+level+"</b><br>"+
+    "商品: "+esc(product)+"<br>"+
+    "専門: "+esc(field)+"<br>"+
+    "利益: ¥"+Math.round(profit).toLocaleString()+"<br>"+
+    "Sell-through: "+sellRate.toFixed(1)+"%<br>"+
+    "スコア: "+score+"/7";
+}
+function searchSold(){
+  const keyword=val("qField") || val("qProduct");
+  if(!keyword) return;
+
+  const url=
+    "https://www.ebay.com/sch/i.html?_nkw="+
+    encodeURIComponent(keyword)+
+    "&LH_Sold=1&LH_Complete=1";
+
+  window.open(url,"_blank");
+}
 function updateJudge(){
  const sold=+val("sold"),active=+val("active"),sale=+val("saleUSD"),buyerShip=+val("buyerShipUSD"),
  cost=+val("costJPY"),ship=+val("shipJPY"),outShip=+val("outShipJPY"),tariff=+val("tariffJPY"),
@@ -1169,23 +1226,11 @@ function importData(){
 /* =========================
    起動時処理
 ========================= */
-
-renderHome();
-
-syncMode();
-
-showPage(
-  "home",
-  document.querySelector(
-    '.nav button[data-page="home"]'
-  )
-);
 renderHome();
 syncMode();
-showPage(
-  "home",
-  document.querySelector('.nav button[data-page="home"]')
-);
+showPage("home",
+document.querySelector('.nav 
+button[data-page="home"]' ));
 </script>
 </body>
 </html>
