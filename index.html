@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="4.3">
+<meta name="app-version" content="4.4">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -177,7 +177,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v4.3";
+const APP_VERSION="v4.4";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -436,18 +436,25 @@ function updateReversePrice(){
  const fee=Math.min(feeRate,100)/100;
  const targets=[1000,1500,2000];
  const fieldGoal=fields[mode]?.goal;
- if(fieldGoal && !targets.includes(fieldGoal))targets.push(fieldGoal);
+ if(fieldGoal&&!targets.includes(fieldGoal))targets.push(fieldGoal);
  const fixedCosts=cost+ship+outShip+tariff;
- if(fx<=0 || fee>=1){
-  box.innerHTML='<b>計算できません</b><div class="small">為替は1円より大きい値、手数料率は100%未満に設定してください。</div>';
-  return;
+ box.innerHTML="";
+ if(fx<=0||fee>=1){
+  const error=document.createElement("div");error.className="small";error.textContent="計算できません。為替は1円より大きい値、手数料率は100%未満にしてください。";box.appendChild(error);return;
  }
- const rows=targets.sort((a,b)=>a-b).map(target=>{
+ const intro=document.createElement("div");intro.className="small";intro.textContent="入力した費用を反映した必要な商品販売価格です（USD）。";box.appendChild(intro);
+ targets.sort((a,b)=>a-b).forEach(target=>{
   const raw=((fixedCosts+target)/(fx*(1-fee)))-buyerShip;
   const price=Math.max(0,Math.ceil(raw*100-1e-8)/100);
   const estimated=(price+buyerShip)*fx*(1-fee)-fixedCosts;
-  const note=raw<0?"購入者送料だけで目標利益を超える計算です。":"";
-  return '<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid #e5e7eb"><div><b>目標利益 ¥'+target.toLocaleString()+'</b><div class="small">逆算後の推定利益 ¥'+Math.floor(estimated).toLocaleString()+'</div></div><div style="text-align:right;white-space:nowrap"><b style="font-size:19px">
+  const row=document.createElement("div");row.style.cssText="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #e5e7eb";
+  const left=document.createElement("div");const targetLabel=document.createElement("b");targetLabel.textContent="目標利益 ¥"+target.toLocaleString();left.appendChild(targetLabel);
+  const est=document.createElement("div");est.className="small";est.textContent="逆算後の推定利益 ¥"+Math.floor(estimated).toLocaleString();left.appendChild(est);
+  const right=document.createElement("div");right.style.cssText="text-align:right;white-space:nowrap";const amount=document.createElement("b");amount.style.fontSize="19px";amount.textContent="$"+price.toFixed(2);right.appendChild(amount);
+  const caption=document.createElement("div");caption.className="small";caption.textContent="商品価格";right.appendChild(caption);row.append(left,right);box.appendChild(row);
+ });
+ const note=document.createElement("div");note.className="small";note.style.marginTop="8px";note.textContent="※未入力の費用は計算に含まれません。実際の手数料・為替差・関税条件も確認してください。";box.appendChild(note);
+}
 document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
 
 function bindAppEvents(){
