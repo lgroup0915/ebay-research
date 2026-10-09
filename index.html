@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="4.2">
+<meta name="app-version" content="4.3">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -120,6 +120,10 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </div>
 
 <div id="judgement" class="result"></div>
+<div class="sectionTitle">🎯 目標利益から販売価格を逆算</div>
+<div class="result" id="priceReverse" aria-live="polite">
+ <div class="small">仕入価格・送料・関税・為替・手数料を入力すると、目標利益ごとの必要な商品販売価格（USD）を表示します。</div>
+</div>
 <div class="btnrow">
 <button class="btn secondary" type="button" onclick="runJudge()">🧭 判定する</button>
 <button class="btn secondary" type="button" onclick="searchSold()">🔎 eBay Sold検索</button>
@@ -173,7 +177,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v4.2";
+const APP_VERSION="v4.3";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -415,7 +419,957 @@ function updateJudge(){
  <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">利益の内訳を確認</summary><div class="small" style="margin-top:6px;line-height:1.8">売上（商品価格＋購入者送料）：¥${Math.round(revenue).toLocaleString()}<br>eBay等手数料（${feeRate}%）：−¥${Math.round(ebayFee).toLocaleString()}<br>仕入価格：−¥${Math.round(cost).toLocaleString()}<br>仕入送料：−¥${Math.round(ship).toLocaleString()}<br>海外発送費：−¥${Math.round(outShip).toLocaleString()}<br>セラー負担の関税等：−¥${Math.round(tariff).toLocaleString()}<br>為替設定：1 USD＝${fx}円</div></details>
  <div class="small" style="margin-top:8px">※「仕入れ候補」は自動判定上の候補です。実際の仕入れ前に、Sold期間・送料・関税・規制・適合を最終確認してください。</div>`;
 
+ updateReversePrice();
  return {profit,sellRate,level,score,reasons,revenue,ebayFee};
+}
+
+function updateReversePrice(){
+ const box=document.getElementById("priceReverse");
+ if(!box)return;
+ const cost=Math.max(0,+val("costJPY")||0);
+ const ship=Math.max(0,+val("shipJPY")||0);
+ const outShip=Math.max(0,+val("outShipJPY")||0);
+ const tariff=Math.max(0,+val("tariffJPY")||0);
+ const buyerShip=Math.max(0,+val("buyerShipUSD")||0);
+ const fx=val("fx")===""?150:(+val("fx")||150);
+ const feeRate=val("feeRate")===""?15:Math.max(0,+val("feeRate")||0);
+ const fee=Math.min(feeRate,100)/100;
+ const targets=[1000,1500,2000];
+ const fieldGoal=fields[mode]?.goal;
+ if(fieldGoal && !targets.includes(fieldGoal))targets.push(fieldGoal);
+ const fixedCosts=cost+ship+outShip+tariff;
+ if(fx<=0 || fee>=1){
+  box.innerHTML='<b>計算できません</b><div class="small">為替は1円より大きい値、手数料率は100%未満に設定してください。</div>';
+  return;
+ }
+ const rows=targets.sort((a,b)=>a-b).map(target=>{
+  const raw=((fixedCosts+target)/(fx*(1-fee)))-buyerShip;
+  const price=Math.max(0,Math.ceil(raw*100-1e-8)/100);
+  const estimated=(price+buyerShip)*fx*(1-fee)-fixedCosts;
+  const note=raw<0?"購入者送料だけで目標利益を超える計算です。":"";
+  return '<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid #e5e7eb"><div><b>目標利益 ¥'+target.toLocaleString()+'</b><div class="small">逆算後の推定利益 ¥'+Math.floor(estimated).toLocaleString()+'</div></div><div style="text-align:right;white-space:nowrap"><b style="font-size:19px">
+document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
+
+function bindAppEvents(){
+ // 数値欄は初期値が0のとき、入力開始時に0を消して追加入力を防ぐ。
+ // 例：0 → 1 → 10（01にならない）。空欄のまま離れた場合は0に戻す。
+ document.querySelectorAll('input[type="number"]').forEach(input=>{
+   input.addEventListener("focus",()=>{
+     if(input.value==="0") input.value="";
+   });
+   // Androidの数字キーボードで0が残って010などになるケースを補正
+   input.addEventListener("input",()=>{
+     const value=input.value;
+     if(/^0\d+$/.test(value)){
+       input.value=value.replace(/^0+/,"")||"0";
+     }
+   });
+   input.addEventListener("blur",()=>{
+     if(input.value.trim()==="") {
+       input.value="0";
+       input.dispatchEvent(new Event("input",{bubbles:true}));
+     }
+   });
+ });
+ document.querySelectorAll(".nav button[data-page]").forEach(btn=>{
+   btn.addEventListener("click",()=>showPage(btn.dataset.page,btn));
+ });
+ const quickBtn=document.getElementById("quickJudgeBtn");
+ if(quickBtn) quickBtn.addEventListener("click",quickJudge);
+ const quickSoldBtn=document.getElementById("quickSoldBtn");
+ if(quickSoldBtn) quickSoldBtn.addEventListener("click",searchSold);
+ const quickToRegisterDirectBtn=document.getElementById("quickToRegisterDirectBtn");
+ if(quickToRegisterDirectBtn) quickToRegisterDirectBtn.addEventListener("click",quickToRegister);
+ const runBtn=document.querySelector('#register button[onclick="runJudge()"]');
+ if(runBtn){runBtn.removeAttribute("onclick");runBtn.addEventListener("click",runJudge);}
+ const saveBtn=document.querySelector('#register button[onclick="saveItem()"]');
+ if(saveBtn){saveBtn.removeAttribute("onclick");saveBtn.addEventListener("click",saveItem);}
+ const soldBtn=document.querySelector('#register button[onclick="searchSold()"]');
+ if(soldBtn){soldBtn.removeAttribute("onclick");soldBtn.addEventListener("click",searchSold);}
+ const exportBtn=document.querySelector('.bottom button[onclick="exportData()"]');
+ if(exportBtn){exportBtn.removeAttribute("onclick");exportBtn.addEventListener("click",exportData);}
+ const importBtn=document.querySelector('.bottom button[onclick="importData()"]');
+ if(importBtn){importBtn.removeAttribute("onclick");importBtn.addEventListener("click",importData);}
+ const closeBtn=document.querySelector('.modal-close');
+ if(closeBtn){closeBtn.removeAttribute("onclick");closeBtn.addEventListener("click",()=>closeDetail());}
+ const modal=document.getElementById("detailModal");
+ if(modal){modal.addEventListener("click",e=>{if(e.target===modal)closeDetail();});}
+}
+if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",bindAppEvents);
+else bindAppEvents();
+function runJudge(){
+  try{
+    const r=updateJudge();
+    document.getElementById("judgement").scrollIntoView({behavior:"smooth",block:"center"});
+    return r;
+  }catch(e){
+    alert("判定処理でエラーが発生しました。入力内容を確認してください。");
+    console.error(e);
+  }
+}
+function saveItem(){
+
+  const r=runJudge();
+  if(!r)return;
+
+  const x={
+    id:editingId||Date.now(),
+    time:editingId
+      ? (items.find(i=>i.id===editingId)?.time||new Date().toISOString())
+      : new Date().toISOString(),
+
+    mode,
+
+    product:val("product"),
+    keyword:val("keyword"),
+    brand:val("brand"),
+
+    sold:+val("sold"),
+    active:+val("active"),
+    saleUSD:+val("saleUSD"),
+    buyerShipUSD:+val("buyerShipUSD"),
+
+    cost:+val("costJPY"),
+    ship:+val("shipJPY"),
+    outShip:+val("outShipJPY"),
+    tariff:+val("tariffJPY"),
+
+    weight:+val("weight"),
+    fx:+val("fx")||150,
+
+    feeRate:val("feeRate")===""?15:Number(val("feeRate")),
+    minProfit:val("minProfit")===""?1000:Number(val("minProfit")),
+
+    profit:Math.round(r.profit),
+    sellRate:r.sellRate,
+    level:r.level,
+    score:r.score,
+    reasons:r.reasons||[],
+
+    restriction:val("restriction"),
+    returnRisk:val("returnRisk"),
+    memo:val("memo"),
+
+    vehicle:{
+      maker:val("vehicleMaker"),
+      model:val("vehicleModel"),
+      year:val("year"),
+      generation:val("generation"),
+      partClass:val("partClass"),
+      conditionType:val("conditionType"),
+      partNumber:val("partNumber"),
+      fitment:val("fitment"),
+      usMarket:val("usMarket")
+    }
+  };
+
+
+  /* 編集の場合は元データを上書き */
+  if(editingId){
+
+    const index=items.findIndex(i=>i.id===editingId);
+
+    if(index!==-1){
+      items[index]=x;
+    }
+
+    editingId=null;
+
+    localStorage.setItem(
+      "ebayItems",
+      JSON.stringify(items)
+    );
+
+    alert("登録内容を更新しました。");
+
+  }else{
+
+    /* 新規登録 */
+    items.unshift(x);
+
+    localStorage.setItem(
+      "ebayItems",
+      JSON.stringify(items)
+    );
+
+    alert("保存しました。");
+  }
+
+
+  showPage(
+    "history",
+    document.querySelector(
+      '.nav button[data-page="history"]'
+    )
+  );
+}
+
+
+/* =========================
+   履歴詳細表示
+========================= */
+
+function showDetail(index){
+
+  const x=items[index];
+
+  if(!x)return;
+
+  const vehicle=x.vehicle||{};
+
+  const modeName=
+    fields[x.mode]?.name ||
+    x.mode ||
+    "不明";
+
+  const levelLabel=
+    x.level==="GO"
+      ?"🟢 仕入れ候補"
+      :x.level==="KEEP"
+        ?"🟡 保留・追加調査"
+        :"🔴 見送り";
+
+
+  document.getElementById("detailBody").innerHTML=`
+
+    <div class="result ${
+      x.level==="GO"
+        ?"go"
+        :x.level==="KEEP"
+          ?"keep"
+          :"stop"
+    }">
+
+      <h2>${levelLabel}</h2>
+
+      <div>
+        推定利益：
+        <b>¥${Number(x.profit||0).toLocaleString()}</b>
+      </div>
+
+      <div style="margin-top:5px">
+        回転率：
+        <b>${Number(x.sellRate||0).toFixed(1)}%</b>
+      </div>
+
+      <div style="margin-top:5px">
+        判定スコア：
+        <b>${Number(x.score||0)}</b>
+      </div>
+
+    </div>
+
+
+    <div class="sectionTitle">
+      📦 商品情報
+    </div>
+
+    <div class="detail-grid">
+
+      ${detailItem("商品名",x.product)}
+      ${detailItem("eBay検索",x.keyword)}
+      ${detailItem("メーカー/ブランド",x.brand)}
+      ${detailItem("専門分野",modeName)}
+
+    </div>
+
+
+    <div class="sectionTitle">
+      🚗 車両・部品情報
+    </div>
+
+    <div class="detail-grid">
+
+      ${detailItem("メーカー",vehicle.maker)}
+      ${detailItem("車種",vehicle.model)}
+      ${detailItem("年式",vehicle.year)}
+      ${detailItem("世代/型式",vehicle.generation)}
+      ${detailItem("部品分類",vehicle.partClass)}
+      ${detailItem("状態",vehicle.conditionType)}
+      ${detailItem("OEM/Part Number",vehicle.partNumber)}
+      ${detailItem("適合確認",vehicle.fitment)}
+      ${detailItem("US市場",vehicle.usMarket)}
+
+    </div>
+
+
+    <div class="sectionTitle">
+      📊 eBayデータ
+    </div>
+
+    <div class="detail-grid">
+
+      ${detailItem("Sold数",x.sold)}
+      ${detailItem("現在出品数",x.active)}
+      ${detailItem("販売価格 USD",x.saleUSD)}
+      ${detailItem("購入者送料 USD",x.buyerShipUSD)}
+
+      ${detailItem(
+        "日本仕入価格",
+        "¥"+Number(x.cost||0).toLocaleString()
+      )}
+
+      ${detailItem(
+        "仕入先送料",
+        "¥"+Number(x.ship||0).toLocaleString()
+      )}
+
+      ${detailItem(
+        "海外発送送料",
+        "¥"+Number(x.outShip||0).toLocaleString()
+      )}
+
+      ${detailItem(
+        "関税・税",
+        "¥"+Number(x.tariff||0).toLocaleString()
+      )}
+
+      ${detailItem(
+        "重量",
+        (x.weight||0)+" g"
+      )}
+
+      ${detailItem(
+        "為替",
+        "¥"+(x.fx||150)+"/USD"
+      )}
+
+    </div>
+
+
+    <div class="sectionTitle">
+      ⚠️ リスク・判定
+    </div>
+
+    <div class="detail-grid">
+
+      ${detailItem(
+        "メーカー規制",
+        x.restriction
+      )}
+
+      ${detailItem(
+        "返品リスク",
+        x.returnRisk
+      )}
+
+      ${detailItem(
+        "手数料率",
+        (x.feeRate===undefined?15:x.feeRate)+"%"
+      )}
+
+      ${detailItem(
+        "最低目標利益",
+        "¥"+Number(
+          x.minProfit===undefined?1000:x.minProfit
+        ).toLocaleString()
+      )}
+
+      ${detailItem(
+        "判定スコア",
+        x.score
+      )}
+
+      ${detailItem(
+        "判定理由",
+        (x.reasons||[]).join("・")
+      )}
+
+    </div>
+
+
+    <div class="sectionTitle">
+      📝 メモ
+    </div>
+
+    <div class="detail">
+      ${esc(x.memo||"")}
+    </div>
+
+
+    <div class="btnrow" style="margin-top:18px">
+
+      <button
+        class="btn primary"
+        type="button"
+        onclick="editItem(${index})">
+        ✏️ 編集
+      </button>
+
+      <button
+        class="btn secondary"
+        type="button"
+        onclick="deleteItem(${index})">
+        🗑️ 削除
+      </button>
+
+    </div>
+
+  `;
+
+
+  document
+    .getElementById("detailModal")
+    .classList.remove("hidden");
+}
+
+
+/* =========================
+   詳細項目表示
+========================= */
+
+function detailItem(label,value){
+
+  return `
+    <div class="detail">
+
+      <span>${esc(label)}</span>
+
+      <b>${esc(
+        value===undefined ||
+        value===null ||
+        value===""
+          ?"未入力"
+          :String(value)
+      )}</b>
+
+    </div>
+  `;
+}
+
+
+/* =========================
+   HTMLエスケープ
+========================= */
+
+function esc(value){
+
+  return String(value??"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+
+/* =========================
+   詳細を閉じる
+========================= */
+
+function closeDetail(){
+
+  document
+    .getElementById("detailModal")
+    .classList.add("hidden");
+}
+
+
+/* =========================
+   履歴を編集
+========================= */
+
+function editItem(index){
+
+  const x=items[index];
+
+  if(!x)return;
+
+
+  /* 編集中IDを記憶 */
+  editingId=x.id;
+
+
+  /* 専門分野 */
+  if(fields[x.mode]){
+
+    mode=x.mode;
+
+    localStorage.setItem(
+      "ebayMode",
+      mode
+    );
+  }
+
+
+  /* 登録画面へ移動 */
+
+  showPage(
+    "register",
+    document.querySelector(
+      '.nav button[data-page="register"]'
+    )
+  );
+
+
+  /* モードを同期 */
+
+  syncMode();
+
+
+  /* 商品情報 */
+
+  setVal("product",x.product);
+  setVal("keyword",x.keyword);
+  setVal("brand",x.brand);
+
+
+  /* eBayデータ */
+
+  setVal("sold",x.sold);
+  setVal("active",x.active);
+  setVal("saleUSD",x.saleUSD);
+  setVal("buyerShipUSD",x.buyerShipUSD);
+
+  setVal("costJPY",x.cost);
+  setVal("shipJPY",x.ship);
+  setVal("outShipJPY",x.outShip);
+  setVal("tariffJPY",x.tariff);
+
+  setVal("weight",x.weight);
+  setVal("fx",x.fx||150);
+
+
+  /* リスク */
+
+  setVal(
+    "restriction",
+    x.restriction
+  );
+
+  setVal(
+    "returnRisk",
+    x.returnRisk
+  );
+
+  setVal(
+    "memo",
+    x.memo
+  );
+
+
+  /* 判定条件 */
+
+  setVal(
+    "feeRate",
+    x.feeRate===undefined?15:x.feeRate
+  );
+
+  setVal(
+    "minProfit",
+    x.minProfit===undefined?1000:x.minProfit
+  );
+
+
+  /* 車両・部品情報 */
+
+  const v=x.vehicle||{};
+
+  setVal(
+    "vehicleMaker",
+    v.maker
+  );
+
+  setVal(
+    "vehicleModel",
+    v.model
+  );
+
+  setVal(
+    "year",
+    v.year
+  );
+
+  setVal(
+    "generation",
+    v.generation
+  );
+
+  setVal(
+    "partClass",
+    v.partClass
+  );
+
+  setVal(
+    "conditionType",
+    v.conditionType
+  );
+
+  setVal(
+    "partNumber",
+    v.partNumber
+  );
+
+  setVal(
+    "fitment",
+    v.fitment
+  );
+
+  setVal(
+    "usMarket",
+    v.usMarket
+  );
+
+
+  /* 判定を再計算 */
+
+  updateJudge();
+
+
+  /* モーダルを閉じる */
+
+  closeDetail();
+
+
+  /* 登録画面上部へ */
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+}
+
+
+/* =========================
+   フォームへ値を入れる
+========================= */
+
+function setVal(id,value){
+
+  const el=document.getElementById(id);
+
+  if(el){
+    el.value=
+      value===undefined ||
+      value===null
+        ?""
+        :value;
+  }
+}
+
+
+/* =========================
+   履歴削除
+========================= */
+
+function deleteItem(index){
+
+  const x=items[index];
+
+  if(!x)return;
+
+
+  const name=
+    x.product ||
+    "この商品";
+
+
+  const ok=confirm(
+    "「"+
+    name+
+    "」を履歴から削除しますか？"
+  );
+
+
+  if(!ok)return;
+
+
+  items.splice(index,1);
+
+
+  localStorage.setItem(
+    "ebayItems",
+    JSON.stringify(items)
+  );
+
+
+  closeDetail();
+
+  renderHistory();
+
+  renderHome();
+}
+
+
+/* =========================
+   履歴表示
+========================= */
+
+function renderHistory(){
+
+  const box=
+    document.getElementById(
+      "historyList"
+    );
+
+  if(!box)return;
+
+
+  if(!items.length){
+
+    box.innerHTML=`
+      <div class="small">
+        まだ登録履歴がありません。
+      </div>
+    `;
+
+    return;
+  }
+
+
+  box.innerHTML=
+    items.map((x,index)=>{
+
+      const levelLabel=
+        x.level==="GO"
+          ?"🟢 候補"
+          :x.level==="KEEP"
+            ?"🟡 保留"
+            :"🔴 見送り";
+
+
+      const modeName=
+        fields[x.mode]?.name ||
+        x.mode ||
+        "不明";
+
+
+      const date=x.time
+        ?new Date(x.time)
+          .toLocaleString("ja-JP")
+        :"日時不明";
+
+
+      return `
+
+        <div class="history-card">
+
+          <div style="
+            font-size:18px;
+            font-weight:800;
+          ">
+            ${esc(
+              x.product||
+              "商品名未入力"
+            )}
+          </div>
+
+
+          <div class="small"
+               style="margin-top:5px">
+            ${esc(modeName)}
+            ／ ${date}
+          </div>
+
+
+          <div style="
+            margin-top:8px;
+            font-weight:700;
+          ">
+            ${levelLabel}
+          </div>
+
+
+          <div style="
+            margin-top:5px;
+          ">
+            推定利益：
+            <b>
+              ¥${Number(
+                x.profit||0
+              ).toLocaleString()}
+            </b>
+          </div>
+
+
+          <div class="btnrow">
+
+            <button
+              class="btn secondary"
+              type="button"
+              onclick="showDetail(${index})">
+              📋 詳細
+            </button>
+
+            <button
+              class="btn primary"
+              type="button"
+              onclick="editItem(${index})">
+              ✏️ 編集
+            </button>
+
+          </div>
+
+
+          <button
+            class="btn secondary"
+            type="button"
+            style="
+              width:100%;
+              margin-top:10px;
+            "
+            onclick="deleteItem(${index})">
+            🗑️ 削除
+          </button>
+
+        </div>
+
+      `;
+
+    }).join("");
+}
+
+
+/* =========================
+   データ書き出し
+========================= */
+
+function exportData(){
+
+  const blob=new Blob(
+    [
+      JSON.stringify(
+        items,
+        null,
+        2
+      )
+    ],
+    {
+      type:"application/json"
+    }
+  );
+
+
+  const url=
+    URL.createObjectURL(blob);
+
+
+  const a=
+    document.createElement("a");
+
+
+  a.href=url;
+
+  a.download=
+    "ebay-research-backup-"+
+    new Date()
+      .toISOString()
+      .slice(0,10)+
+    ".json";
+
+
+  document.body.appendChild(a);
+
+  a.click();
+
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+
+/* =========================
+   データ読み込み
+========================= */
+
+function importData(){
+
+  const input=
+    document.createElement("input");
+
+
+  input.type="file";
+
+  input.accept=".json,application/json";
+
+
+  input.onchange=function(){
+
+    const file=
+      input.files?.[0];
+
+
+    if(!file)return;
+
+
+    const reader=
+      new FileReader();
+
+
+    reader.onload=function(){
+
+      try{
+
+        const parsed=
+          JSON.parse(
+            reader.result
+          );
+
+
+        if(!Array.isArray(parsed)){
+
+          throw new Error(
+            "データ形式が不正です"
+          );
+        }
+
+
+        items=parsed;
+
+
+        localStorage.setItem(
+          "ebayItems",
+          JSON.stringify(items)
+        );
+
+
+        renderHome();
+
+        renderHistory();
+
+
+        alert(
+          items.length+
+          "件のデータを読み込みました。"
+        );
+
+
+      }catch(e){
+
+        console.error(e);
+
+
+        alert(
+          "読み込みに失敗しました。"+
+          "\nJSONファイルを確認してください。"
+        );
+
+      }
+
+    };
+
+
+    reader.readAsText(file);
+
+  };
+
+
+  input.click();
+}
+
+
+/* =========================
+   起動時処理
+========================= */
+renderHome();
+syncMode();
+showPage("home",document.querySelector('.nav button[data-page="home"]'));
+</script>
+</body>
+</html>
++price.toFixed(2)+'</b><div class="small">商品価格（USD）</div></div></div>'+(note?'<div class="small">'+note+'</div>':'');
+ }).join("");
+ box.innerHTML='<div class="small" style="margin-bottom:6px">購入者送料を含む売上から手数料を引き、入力済みの費用を差し引いて計算。価格は目標利益を下回らないよう1セント単位で切り上げています。</div>'+rows+'<div class="small" style="margin-top:8px">※関税・海外発送費などの未入力分は計算に含まれません。実際のeBay手数料や為替差も確認してください。</div>';
 }
 document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
 
