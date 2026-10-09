@@ -364,6 +364,13 @@ function bindAppEvents(){
    input.addEventListener("focus",()=>{
      if(input.value==="0") input.value="";
    });
+   // Androidの数字キーボードで0が残って010などになるケースを補正
+   input.addEventListener("input",()=>{
+     const value=input.value;
+     if(/^0\d+$/.test(value)){
+       input.value=value.replace(/^0+/,"")||"0";
+     }
+   });
    input.addEventListener("blur",()=>{
      if(input.value.trim()==="") {
        input.value="0";
