@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="4.1">
+<meta name="app-version" content="4.2">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -173,7 +173,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v4.1";
+const APP_VERSION="v4.2";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -348,55 +348,72 @@ function updateJudge(){
  cost=+val("costJPY"),ship=+val("shipJPY"),outShip=+val("outShipJPY"),tariff=+val("tariffJPY"),
  fx=val("fx")===""?150:(+val("fx")||150),feeRate=val("feeRate")===""?15:(+val("feeRate")||0),fee=Math.max(0,feeRate)/100,min=val("minProfit")===""?1000:Math.max(0,+val("minProfit")||0);
 
- // eBay上の売上総額（商品価格＋購入者送料）から手数料を計算
+ // 売上・利益の計算
  const grossUSD=sale+buyerShip;
  const revenue=grossUSD*fx;
  const ebayFee=revenue*fee;
  const profit=revenue-ebayFee-cost-ship-outShip-tariff;
-
- // 目安の売れ行き：Sold / (Sold + 現在出品)
  const denominator=sold+active;
  const sellRate=denominator>0?sold/denominator*100:0;
-
- const p=fields[mode].goal;
+ const targetProfit=Math.max(min,fields[mode].goal);
+ const restriction=val("restriction");
+ const returnRisk=val("returnRisk");
+ const hasPartNumber=!!val("partNumber").trim();
+ const fitmentOK=val("fitment")==="確認済み";
+ const marketOK=val("usMarket")!=="不明";
  let score=0,reasons=[];
 
- if(profit>=Math.max(min,p)){score+=3}
- else if(profit>=min){score+=2}
- else reasons.push("利益不足");
+ // まずデータ不足を見える化。未入力を「問題なし」と誤判定しない。
+ const missing=[];
+ if(sale<=0)missing.push("販売価格未入力");
+ if(cost<=0)missing.push("仕入価格未入力");
+ if(denominator<=0)missing.push("Sold数・出品数未入力");
+ if(missing.length)reasons.push("データ不足："+missing.join("・"));
 
- if(sold>=10){score+=2}
- else if(sold>=3){score+=1}
- else reasons.push("Sold少なめ");
-
- if(denominator>0 && sellRate>=30){score+=2}
- else if(denominator>0 && sellRate>=10){score+=1}
- else reasons.push("回転率要確認");
-
+ const profitOK=profit>=min;
+ const targetOK=profit>=targetProfit;
+ const demandStrong=sold>=10;
+ const demandSome=sold>=3;
+ const rateStrong=denominator>0 && sellRate>=30;
+ const rateSome=denominator>0 && sellRate>=10;
+ if(targetOK)score+=3;else if(profitOK)score+=2;else reasons.push("最低目標利益未達");
+ if(demandStrong)score+=2;else if(demandSome)score+=1;else reasons.push("Sold少なめ（需要を追加確認）");
+ if(rateStrong)score+=2;else if(rateSome)score+=1;else reasons.push("回転率要確認");
  if(+val("weight")>0 && +val("weight")<=500)score+=1;
+ if(restriction==="問題なし")score+=1;
+ else if(restriction==="規制あり")reasons.push("メーカー規制あり");
+ else reasons.push("メーカー規制を確認");
+ if(returnRisk==="高")reasons.push("返品リスク高");
+ if(returnRisk==="中")reasons.push("返品条件・適合説明を確認");
 
+ let fitmentOKAll=true;
  if(mode==="motors"){
-   if(val("partNumber") && val("fitment")==="確認済み"){score+=2}
-   else reasons.push("OEM/適合要確認");
-   if(val("restriction")==="問題なし"){score+=1}
-   else reasons.push("メーカー規制要確認");
-   if(val("returnRisk")==="高"){score-=2;reasons.push("返品リスク高")}
- }else{
-   if(val("restriction")==="問題なし")score+=1;
-   else reasons.push("規制要確認");
-   if(val("returnRisk")==="高"){score-=2;reasons.push("返品リスク高")}
+   fitmentOKAll=hasPartNumber && fitmentOK && marketOK;
+   if(!hasPartNumber)reasons.push("OEM/Part Number未入力");
+   if(!fitmentOK)reasons.push("車種・年式の適合未確認");
+   if(!marketOK)reasons.push("US市場・輸入車適合を確認");
  }
 
- let level=score>=8?"GO":score>=5?"KEEP":"STOP";
+ const hardStop=restriction==="規制あり" || profit<min ||
+   (denominator>0 && sold<3 && sellRate<10);
+ const goReady=missing.length===0 && targetOK && demandStrong && rateStrong &&
+   restriction==="問題なし" && returnRisk==="低" && fitmentOKAll;
+
+ let level=goReady?"GO":hardStop?"STOP":"KEEP";
+ if(level==="GO")reasons.push("利益・需要・回転率・リスクの主要条件をクリア");
+ if(level==="STOP" && restriction==="規制あり")reasons.unshift("仕入れ中止：メーカー規制あり");
+ else if(level==="STOP" && profit<min)reasons.unshift("仕入れ見送り：最低目標利益に届かない");
+ else if(level==="STOP")reasons.unshift("仕入れ見送り：Sold数・回転率が低い");
  const cls=level==="GO"?"go":level==="KEEP"?"keep":"stop";
- const label=level==="GO"?"🟢 仕入れ候補":level==="KEEP"?"🟡 保留・追加調査":"🔴 見送り";
+ const label=level==="GO"?"🟢 仕入れ候補（最終確認）":level==="KEEP"?"🟡 追加調査":"🔴 見送り";
 
  document.getElementById("judgement").className="result "+cls;
  document.getElementById("judgement").innerHTML=
- `<h2>🧭 最終判定：${label}</h2>
- <div>推定利益：<b>¥${Math.round(profit).toLocaleString()}</b>
- ／ 回転率目安：<b>${sellRate.toFixed(1)}%</b></div>
- <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">利益の内訳を確認</summary><div class="small" style="margin-top:6px;line-height:1.8">売上（商品価格＋購入者送料）：¥${Math.round(revenue).toLocaleString()}<br>eBay等手数料（${feeRate}%）：−¥${Math.round(ebayFee).toLocaleString()}<br>仕入価格：−¥${Math.round(cost).toLocaleString()}<br>仕入送料：−¥${Math.round(ship).toLocaleString()}<br>海外発送費：−¥${Math.round(outShip).toLocaleString()}<br>セラー負担の関税等：−¥${Math.round(tariff).toLocaleString()}<br>為替設定：1 USD＝${fx}円</div></details> <div class="small" style="margin-top:6px">${reasons.length?reasons.join("・"):"主要条件をクリア"}</div>`;
+ `<h2>🧭 判定：${label}</h2>
+ <div>推定利益：<b>¥${Math.round(profit).toLocaleString()}</b> ／ 目標：¥${Math.round(targetProfit).toLocaleString()}以上<br>回転率目安：<b>${sellRate.toFixed(1)}%</b>（Sold ${sold}件／現在出品 ${active}件）</div>
+ <div class="small" style="margin-top:8px;line-height:1.8"><b>判定の理由</b><br>${reasons.length?reasons.join("・"):"主要条件をクリア"}</div>
+ <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">利益の内訳を確認</summary><div class="small" style="margin-top:6px;line-height:1.8">売上（商品価格＋購入者送料）：¥${Math.round(revenue).toLocaleString()}<br>eBay等手数料（${feeRate}%）：−¥${Math.round(ebayFee).toLocaleString()}<br>仕入価格：−¥${Math.round(cost).toLocaleString()}<br>仕入送料：−¥${Math.round(ship).toLocaleString()}<br>海外発送費：−¥${Math.round(outShip).toLocaleString()}<br>セラー負担の関税等：−¥${Math.round(tariff).toLocaleString()}<br>為替設定：1 USD＝${fx}円</div></details>
+ <div class="small" style="margin-top:8px">※「仕入れ候補」は自動判定上の候補です。実際の仕入れ前に、Sold期間・送料・関税・規制・適合を最終確認してください。</div>`;
 
  return {profit,sellRate,level,score,reasons,revenue,ebayFee};
 }
