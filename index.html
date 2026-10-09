@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="3.9">
+<meta name="app-version" content="4.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -37,7 +37,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v3.9</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v3.9</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v4.0</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v4.0</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -139,13 +139,14 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <div class="field"><label>仕入価格 円</label><input id="qCost" type="number" value="0"></div>
 </div>
 <button id="quickJudgeBtn" class="btn primary" type="button" style="width:100%;margin-top:8px">🧭 判定する</button>
-<button id="quickSoldBtn" class="btn" type="button" style="width:100%;margin-top:8px">🔎 eBay Sold検索</button>
+<button id="quickSoldBtn" class="btn secondary" type="button" style="width:100%;margin-top:8px">🔎 eBay Sold検索</button>
+<button id="quickToRegisterDirectBtn" class="btn primary" type="button" style="width:100%;margin-top:8px">➕ 登録画面へ引き継ぐ</button>
 <div id="quickResult" aria-live="polite"></div>
 </div>
 </section>
 
 <section id="history" class="hidden"><div class="card"><h2>📋 履歴</h2><div id="historyList"></div></div></section>
-<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v3.8</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
+<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v4.0</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
 
 <div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
@@ -172,7 +173,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v3.9";
+const APP_VERSION="v4.0";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -313,8 +314,7 @@ function quickJudge(){
     "利益: ¥"+Math.round(profit).toLocaleString()+"<br>"+
     "Sell-through: "+sellRate.toFixed(1)+"%<br>"+
     "スコア: "+score+"/7"+
-    '<button type="button" class="btn primary" id="quickToRegisterBtn" style="width:100%;margin-top:12px">➕ 詳細を登録画面へ引き継ぐ</button>';
-  document.getElementById("quickToRegisterBtn")?.addEventListener("click",quickToRegister);
+    "";
 }
 function quickToRegister(){
   const product=val("qProduct");
@@ -431,6 +431,8 @@ function bindAppEvents(){
  if(quickBtn) quickBtn.addEventListener("click",quickJudge);
  const quickSoldBtn=document.getElementById("quickSoldBtn");
  if(quickSoldBtn) quickSoldBtn.addEventListener("click",searchSold);
+ const quickToRegisterDirectBtn=document.getElementById("quickToRegisterDirectBtn");
+ if(quickToRegisterDirectBtn) quickToRegisterDirectBtn.addEventListener("click",quickToRegister);
  const runBtn=document.querySelector('#register button[onclick="runJudge()"]');
  if(runBtn){runBtn.removeAttribute("onclick");runBtn.addEventListener("click",runJudge);}
  const saveBtn=document.querySelector('#register button[onclick="saveItem()"]');
