@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="4.6">
+<meta name="app-version" content="4.7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -37,7 +37,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v4.6</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v4.6</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v4.7</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v4.7</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -150,7 +150,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </section>
 
 <section id="history" class="hidden"><div class="card"><h2>📋 履歴</h2><div id="historyList"></div></div></section>
-<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v4.6</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
+<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v4.7</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
 
 <div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
@@ -177,7 +177,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v4.6";
+const APP_VERSION="v4.7";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -410,17 +410,19 @@ function updateJudge(){
  else if(level==="STOP")reasons.unshift("仕入れ見送り：Sold数・回転率が低い");
  const cls=level==="GO"?"go":level==="KEEP"?"keep":"stop";
  const label=level==="GO"?"🟢 仕入れ候補（最終確認）":level==="KEEP"?"🟡 追加調査":"🔴 見送り";
+ const priorityInfo=getResearchPriority({level,score,reasons,missingData:missing.length>0});
 
  document.getElementById("judgement").className="result "+cls;
  document.getElementById("judgement").innerHTML=
  `<h2>🧭 判定：${label}</h2>
+ <div style="margin:8px 0;padding:10px;border-radius:10px;background:#fff;border:1px solid #dbe3ee"><div class="small">リサーチ優先度（判定スコア ${score}/9）</div><div style="font-size:18px;font-weight:800;margin-top:3px">${priorityInfo.label}</div><div class="small" style="margin-top:3px">${priorityInfo.note}</div></div>
  <div>推定利益：<b>¥${Math.round(profit).toLocaleString()}</b> ／ 目標：¥${Math.round(targetProfit).toLocaleString()}以上<br>回転率目安：<b>${sellRate.toFixed(1)}%</b>（Sold ${sold}件／現在出品 ${active}件）</div>
  <div class="small" style="margin-top:8px;line-height:1.8"><b>判定の理由</b><br>${reasons.length?reasons.join("・"):"主要条件をクリア"}</div>
  <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">利益の内訳を確認</summary><div class="small" style="margin-top:6px;line-height:1.8">売上（商品価格＋購入者送料）：¥${Math.round(revenue).toLocaleString()}<br>eBay等手数料（${feeRate}%）：−¥${Math.round(ebayFee).toLocaleString()}<br>仕入価格：−¥${Math.round(cost).toLocaleString()}<br>仕入送料：−¥${Math.round(ship).toLocaleString()}<br>海外発送費：−¥${Math.round(outShip).toLocaleString()}<br>セラー負担の関税等：−¥${Math.round(tariff).toLocaleString()}<br>為替設定：1 USD＝${fx}円</div></details>
  <div class="small" style="margin-top:8px">※「仕入れ候補」は自動判定上の候補です。実際の仕入れ前に、Sold期間・送料・関税・規制・適合を最終確認してください。</div>`;
 
  updateReversePrice();
- return {profit,sellRate,level,score,reasons,revenue,ebayFee};
+ return {profit,sellRate,level,score,reasons,revenue,ebayFee,priority:priorityInfo.label,priorityRank:priorityInfo.rank,missingData:missing.length>0};
 }
 
 function updateReversePrice(){
@@ -582,6 +584,9 @@ function saveItem(){
     level:r.level,
     score:r.score,
     reasons:r.reasons||[],
+    priority:r.priority||"",
+    priorityRank:r.priorityRank,
+    missingData:!!r.missingData,
 
     restriction:val("restriction"),
     returnRisk:val("returnRisk"),
@@ -693,6 +698,7 @@ function showDetail(index){
         判定スコア：
         <b>${Number(x.score||0)}</b>
       </div>
+      <div style="margin-top:5px">リサーチ優先度：<b>${esc(getResearchPriority(x).label)}</b></div>
 
     </div>
 
@@ -1132,6 +1138,14 @@ function deleteItem(index){
    履歴表示
 ========================= */
 
+function getResearchPriority(x){
+  const missing=!!x.missingData||(x.reasons||[]).some(r=>String(r).startsWith("データ不足"));
+  if(missing)return {rank:2,label:"未評価：データ入力",note:"Sold数・出品数・価格などの不足項目を入力してください。"};
+  if(x.level==="GO")return {rank:0,label:"A：優先して確認",note:"主要条件を満たしています。規制・適合・実送料を最終確認してください。"};
+  if(x.level==="KEEP"&&Number(x.score||0)>=4)return {rank:1,label:"B：追加調査",note:"需要・利益・規制など、残る条件を確認してから判断します。"};
+  return {rank:3,label:"C：後回し候補",note:"利益や需要などに懸念があります。条件が改善したら再評価してください。"};
+}
+
 function renderHistory(){
 
   const box=
@@ -1155,7 +1169,9 @@ function renderHistory(){
 
 
   box.innerHTML=
-    items.map((x,index)=>{
+    items.map((x,index)=>({x,index,priority:getResearchPriority(x)}))
+      .sort((a,b)=>a.priority.rank-b.priority.rank||Number(b.x.score||0)-Number(a.x.score||0)||Number(b.x.profit||0)-Number(a.x.profit||0))
+      .map(({x,index,priority})=>{
 
       const levelLabel=
         x.level==="GO"
@@ -1205,7 +1221,7 @@ function renderHistory(){
           ">
             ${levelLabel}
           </div>
-
+          <div style="margin-top:5px;font-weight:700">${esc(priority.label)}</div>
 
           <div style="
             margin-top:5px;
