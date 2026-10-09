@@ -116,7 +116,11 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <div class="grid">
 <div class="field"><label>メーカー規制</label><select id="restriction"><option>問題なし</option><option>要確認</option><option>規制あり</option></select></div>
 <div class="field"><label>返品リスク</label><select id="returnRisk"><option>低</option><option>中</option><option>高</option></select></div>
-<div class="field full"><label>仕入先候補URL</label><input id="sourceUrl" type="url" inputmode="url" placeholder="https://..."><div class="small">仕入先の商品ページ・購入候補のURL</div></div>
+<div class="field full"><label>仕入先候補リンク（優先順位1〜3）</label><div class="small" style="margin-bottom:8px">サイトの種類は自由です。価格を入力すると候補同士を比較できます。</div>
+<div class="field" style="border:1px solid #e2e8f0;border-radius:12px;padding:10px"><label>優先順位 1（第一候補）</label><input id="sourceUrl1" type="url" inputmode="url" placeholder="仕入先URL 1"><input id="sourcePrice1" type="number" inputmode="numeric" placeholder="商品価格（円）" style="margin-top:7px"><input id="sourceNote1" placeholder="メモ（任意）" style="margin-top:7px"></div>
+<div class="field" style="border:1px solid #e2e8f0;border-radius:12px;padding:10px"><label>優先順位 2（第二候補）</label><input id="sourceUrl2" type="url" inputmode="url" placeholder="仕入先URL 2"><input id="sourcePrice2" type="number" inputmode="numeric" placeholder="商品価格（円）" style="margin-top:7px"><input id="sourceNote2" placeholder="メモ（任意）" style="margin-top:7px"></div>
+<div class="field" style="border:1px solid #e2e8f0;border-radius:12px;padding:10px"><label>優先順位 3（第三候補）</label><input id="sourceUrl3" type="url" inputmode="url" placeholder="仕入先URL 3"><input id="sourcePrice3" type="number" inputmode="numeric" placeholder="商品価格（円）" style="margin-top:7px"><input id="sourceNote3" placeholder="メモ（任意）" style="margin-top:7px"></div></div>
+<div class="field full"><label>リサーチ更新日（Sold数・出品数・価格を確認した日）</label><input id="researchDate" type="date"><div class="small">調査データを更新したら、この日付も更新します。</div></div>
 <div class="field full"><label>eBay Sold / セラーハブリサーチURL</label><input id="soldUrl" type="url" inputmode="url" placeholder="https://..."><div class="small">Terapeak・Seller Hub Research・Sold検索結果などのURL</div></div>
 <div class="field full"><label>メモ</label><textarea id="memo" placeholder="注意点・仕入条件・Redditで見た需要など"></textarea></div>
 </div>
@@ -200,7 +204,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v5.5";
+const APP_VERSION="v5.6";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -612,7 +616,9 @@ function saveItem(){
     product:val("product"),
     keyword:val("keyword"),
     brand:val("brand"),
-    sourceUrl:val("sourceUrl").trim(),
+    sourceUrl:val("sourceUrl1").trim()||val("sourceUrl").trim(),
+    supplierLinks:[1,2,3].map(n=>({priority:n,url:val("sourceUrl"+n).trim(),price:val("sourcePrice"+n)===""?null:Number(val("sourcePrice"+n)),note:val("sourceNote"+n).trim()})).filter(link=>link.url||link.price!==null||link.note),
+    researchDate:val("researchDate")||(editingId?(items.find(i=>i.id===editingId)?.researchDate||""):(new Date().toISOString().slice(0,10))),
     soldUrl:val("soldUrl").trim(),
 
     sold:+val("sold"),
@@ -724,11 +730,28 @@ function shortUrlLabel(value){
     return compact.length>38?compact.slice(0,35)+"…":compact;
   }catch(e){return "";}
 }
+function getSupplierLinks(x){
+  if(Array.isArray(x.supplierLinks)&&x.supplierLinks.length)return x.supplierLinks
+    .map((link,index)=>({priority:Number(link.priority)||index+1,url:String(link.url||"").trim(),price:link.price===null||link.price===undefined||link.price===""?null:Number(link.price),note:String(link.note||"").trim()}))
+    .filter(link=>link.url||link.price!==null||link.note);
+  const legacy=x.sourceUrl||getLegacyLinks(x.memo||"").sourceUrl;
+  return legacy?[{priority:1,url:legacy,price:null,note:""}]:[];
+}
+function supplierPriceSummary(x){
+  const links=getSupplierLinks(x).filter(link=>link.price!==null&&Number.isFinite(link.price)&&link.price>=0);
+  if(!links.length)return "仕入候補価格：未入力";
+  const cheapest=links.slice().sort((a,b)=>a.price-b.price)[0];
+  const current=Number(x.cost||0);
+  const compare=current>0?(cheapest.price<current?"最安候補は現在の仕入価格より¥"+(current-cheapest.price).toLocaleString()+"安い":cheapest.price>current?"最安候補は現在の仕入価格より¥"+(cheapest.price-current).toLocaleString()+"高い":"最安候補と現在の仕入価格は同額"):"現在の仕入価格が未入力";
+  return "候補最安：¥"+cheapest.price.toLocaleString()+"（優先順位"+cheapest.priority+"）／ "+compare;
+}
 function renderSavedLinks(x,compact=false){
-  const links=[
-    {label:"仕入先候補",url:x.sourceUrl||getLegacyLinks(x.memo||"").sourceUrl},
-    {label:"eBay Sold / リサーチ",url:x.soldUrl||getLegacyLinks(x.memo||"").soldUrl}
-  ].filter(item=>item.url&&shortUrlLabel(item.url));
+  const supplierLinks=getSupplierLinks(x);
+  const legacy=getLegacyLinks(x.memo||"");
+  const links=supplierLinks.map(link=>({label:"仕入候補 "+link.priority+(link.price!==null?"｜¥"+Number(link.price).toLocaleString():"")+(link.note?"｜"+link.note:""),url:link.url}))
+    .filter(item=>item.url&&shortUrlLabel(item.url));
+  const soldUrl=x.soldUrl||legacy.soldUrl;
+  if(soldUrl&&shortUrlLabel(soldUrl))links.push({label:"eBay Sold / リサーチ",url:soldUrl});
   if(!links.length)return compact?"":'<div class="small">専用リンクは未登録です。</div>';
   return '<div style="display:grid;gap:8px;margin:8px 0">'+links.map(item=>{
     const label=shortUrlLabel(item.url);
@@ -924,6 +947,8 @@ function showDetail(index){
 
 
     <div class="sectionTitle">🔗 保存リンク</div>
+    <div class="small">リサーチ更新日：${esc(x.researchDate||"未記録")}</div>
+    <div class="small" style="margin-top:5px">${esc(supplierPriceSummary(x))}</div>
     ${renderSavedLinks(x)}
     <div class="sectionTitle">
       📝 メモ
@@ -1060,7 +1085,14 @@ function editItem(index){
   setVal("keyword",x.keyword);
   setVal("brand",x.brand);
   const legacyLinks=getLegacyLinks(x.memo||"");
-  setVal("sourceUrl",x.sourceUrl||legacyLinks.sourceUrl||"");
+  const supplierLinks=Array.isArray(x.supplierLinks)&&x.supplierLinks.length?x.supplierLinks:(x.sourceUrl||legacyLinks.sourceUrl?[{priority:1,url:x.sourceUrl||legacyLinks.sourceUrl,price:null,note:""}]:[]);
+  [1,2,3].forEach(n=>{
+    const link=supplierLinks.find(item=>Number(item.priority)===n)||supplierLinks[n-1]||{};
+    setVal("sourceUrl"+n,link.url||"");
+    setVal("sourcePrice"+n,link.price===null||link.price===undefined?"":link.price);
+    setVal("sourceNote"+n,link.note||"");
+  });
+  setVal("researchDate",x.researchDate||"");
   setVal("soldUrl",x.soldUrl||legacyLinks.soldUrl||"");
 
 
@@ -1447,6 +1479,8 @@ function renderHistory(){
         <div style="margin-top:8px;font-weight:700">${levelLabel}</div>
         <div style="margin-top:5px;font-weight:800;color:${purchaseStage.color}">${purchaseStage.label}</div>
         <div class="small" style="margin-top:3px">${esc(purchaseStage.note)}</div>
+        <div class="small" style="margin-top:5px">リサーチ更新日：${esc(x.researchDate||"未記録")}</div>
+        <div class="small" style="margin-top:5px">${esc(supplierPriceSummary(x))}</div>
         <div style="margin-top:8px;padding:9px 10px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0"><div style="font-weight:800">🏆 優先順位：${ranking.tier}（${ranking.total}/100点）</div><div class="small" style="margin-top:4px">需要 ${ranking.demandScore}/35 ・ 利益 ${ranking.profitScore}/30 ・ 資金効率 ${ranking.capitalScore}/20 ・ リスク確認 ${ranking.riskScore}/15</div><div class="small" style="margin-top:3px">Sell-through目安：${ranking.sellRate.toFixed(1)}% ／ 仕入資金に対する利益率：${ranking.roi.toFixed(1)}%</div><div class="small" style="margin-top:5px">利益比較：${Number(x.profit||0)>=0?"黒字見込み":"赤字見込み"} ／ 1個の仕入資金：¥${(Math.max(0,Number(x.cost)||0)+Math.max(0,Number(x.ship)||0)).toLocaleString()}</div></div>
         <div style="margin-top:5px;font-weight:700">${esc(priority.label)}</div>
         <div style="margin-top:8px;padding:9px 10px;border-radius:10px;background:#f8fafc;color:${checklistStatus.color};font-weight:800">
