@@ -217,21 +217,47 @@ function renderHome(){
 }
 async function copyKeyword(keyword){
  const status=document.getElementById("keywordCopyStatus");
+ const showManualCopy=()=>{
+  if(!status)return;
+  status.innerHTML="";
+  const msg=document.createElement("div");
+  msg.textContent="自動コピーできませんでした。下の文字を長押ししてコピーしてください。";
+  msg.style.marginBottom="8px";
+  const field=document.createElement("input");
+  field.type="text";field.readOnly=true;field.value=keyword;
+  field.setAttribute("aria-label","手動コピー用キーワード");
+  field.style.cssText="width:100%;padding:12px;border:2px solid #2563eb;border-radius:10px;font-size:16px;background:#fff;color:#172033;user-select:text;-webkit-user-select:text";
+  field.addEventListener("click",()=>{field.focus();field.select();});
+  status.append(msg,field);
+  field.focus();field.select();
+ };
  try{
   if(navigator.clipboard && window.isSecureContext){
-   await navigator.clipboard.writeText(keyword);
-  }else{
-   const area=document.createElement("textarea");
-   area.value=keyword;area.setAttribute("readonly","");
-   area.style.position="fixed";area.style.opacity="0";
-   document.body.appendChild(area);area.select();
-   const copied=document.execCommand("copy");area.remove();
-   if(!copied)throw new Error("copy failed");
+   try{
+    await navigator.clipboard.writeText(keyword);
+    if(status)status.textContent="✅ コピーしました： "+keyword;
+    return;
+   }catch(clipboardError){
+    console.warn("Clipboard API failed; trying fallback",clipboardError);
+   }
   }
-  if(status)status.textContent="✅ コピーしました： "+keyword;
+  const area=document.createElement("textarea");
+  area.value=keyword;area.setAttribute("readonly","");
+  area.setAttribute("aria-label","コピー用キーワード");
+  area.style.cssText="position:fixed;left:8px;top:8px;width:90%;padding:12px;font-size:16px;z-index:9999;opacity:1;background:#fff;color:#172033";
+  document.body.appendChild(area);
+  area.focus();area.select();area.setSelectionRange(0,area.value.length);
+  let copied=false;
+  try{copied=document.execCommand("copy");}catch(e){copied=false;}
+  area.remove();
+  if(copied){
+   if(status)status.textContent="✅ コピーしました： "+keyword;
+  }else{
+   showManualCopy();
+  }
  }catch(e){
-  if(status)status.textContent="コピーできませんでした。キーワードを長押ししてコピーしてください。";
-  console.warn("キーワードのコピーに失敗しました",e);
+  console.warn("Keyword copy failed",e);
+  showManualCopy();
  }
 }
 function syncMode(){
