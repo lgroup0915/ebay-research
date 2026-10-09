@@ -396,7 +396,7 @@ function updateJudge(){
  `<h2>🧭 最終判定：${label}</h2>
  <div>推定利益：<b>¥${Math.round(profit).toLocaleString()}</b>
  ／ 回転率目安：<b>${sellRate.toFixed(1)}%</b></div>
- <div class="small" style="margin-top:6px">${reasons.length?reasons.join("・"):"主要条件をクリア"}</div>`;
+ <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">利益の内訳を確認</summary><div class="small" style="margin-top:6px;line-height:1.8">売上（商品価格＋購入者送料）：¥${Math.round(revenue).toLocaleString()}<br>eBay等手数料（${feeRate}%）：−¥${Math.round(ebayFee).toLocaleString()}<br>仕入価格：−¥${Math.round(cost).toLocaleString()}<br>仕入送料：−¥${Math.round(ship).toLocaleString()}<br>海外発送費：−¥${Math.round(outShip).toLocaleString()}<br>セラー負担の関税等：−¥${Math.round(tariff).toLocaleString()}<br>為替設定：1 USD＝${fx}円</div></details> <div class="small" style="margin-top:6px">${reasons.length?reasons.join("・"):"主要条件をクリア"}</div>`;
 
  return {profit,sellRate,level,score,reasons,revenue,ebayFee};
 }
