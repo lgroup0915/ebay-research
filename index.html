@@ -24,6 +24,12 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 .hidden{display:none!important}.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:9px 14px;border-top:1px solid #ddd;display:flex;gap:10px;z-index:10}.bottom button{flex:1;border:0;border-radius:14px;padding:13px;font-weight:700;background:#eef2f7}
 
 .history-card{border:1px solid #e5e7eb;border-radius:16px;padding:14px;margin:10px 0;background:#fff}
+.check-row{display:flex;align-items:flex-start;gap:10px;padding:12px 8px;border-bottom:1px solid #e5e7eb;cursor:pointer}
+.check-row:last-child{border-bottom:0}
+.check-row input{width:22px;height:22px;flex:0 0 22px;margin:1px 0 0;accent-color:#2563eb}
+.check-row span{display:block;line-height:1.45}
+.check-row b{display:block;font-size:14px}
+.check-row small{display:block;color:#667085;font-size:12px;margin-top:3px}
 .history-card button{margin-top:10px;width:100%;border:0;border-radius:12px;padding:11px;background:#eef2f7;font-weight:700}
 .modal{position:fixed;inset:0;background:#0008;z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:0}
 .modal-panel{background:#fff;width:100%;max-width:760px;max-height:88vh;overflow:auto;border-radius:22px 22px 0 0;padding:20px}
@@ -37,7 +43,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v4.7</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v4.7</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v4.8</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v4.8</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -124,6 +130,21 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <div class="result" id="priceReverse" aria-live="polite">
  <div class="small">仕入価格・送料・関税・為替・手数料を入力すると、目標利益ごとの必要な商品販売価格（USD）を表示します。</div>
 </div>
+<div class="sectionTitle">✅ 仕入れ前チェックリスト</div>
+<div class="result" id="prebuyChecklist">
+ <div class="small">仕入れ前に確認できた項目へチェックを入れてください。チェック状態は商品ごとに保存され、履歴から編集して再開できます。</div>
+ <div id="checklistItems" style="margin-top:10px">
+  <label class="check-row"><input type="checkbox" id="checkSold"> <span><b>Sold実績を確認</b><small>調査期間と実際に売れた件数を確認</small></span></label>
+  <label class="check-row"><input type="checkbox" id="checkCompetition"> <span><b>現在の出品競合を確認</b><small>出品数・価格帯・差別化できる点を確認</small></span></label>
+  <label class="check-row"><input type="checkbox" id="checkPrice"> <span><b>販売価格の根拠を確認</b><small>売れた価格を参考に、無理のない販売価格を設定</small></span></label>
+  <label class="check-row"><input type="checkbox" id="checkCosts"> <span><b>費用を一通り入力</b><small>仕入送料・海外送料・手数料・関税などを確認</small></span></label>
+  <label class="check-row"><input type="checkbox" id="checkRestriction"> <span><b>メーカー規制・販売可否を確認</b><small>ブランド制限や輸出・販売上の注意を確認</small></span></label>
+  <label class="check-row"><input type="checkbox" id="checkItem"> <span><b id="checkItemTitle">商品・型番・状態を確認</b><small id="checkItemHelp">型番、付属品、状態、説明と写真の一致を確認</small></span></label>
+  <label class="check-row"><input type="checkbox" id="checkReturns"> <span><b>返品・トラブルリスクを確認</b><small>壊れやすさ、返品条件、誤購入の可能性を確認</small></span></label>
+ </div>
+ <div id="checklistStatus" class="small" aria-live="polite" style="margin-top:10px;font-weight:800">チェック完了：0 / 7</div>
+ <div class="small" style="margin-top:5px">※チェックは仕入れ可否を自動保証するものではありません。未確認項目があれば、購入前に調べてください。</div>
+</div>
 <div class="btnrow">
 <button class="btn secondary" type="button" onclick="runJudge()">🧭 判定する</button>
 <button class="btn secondary" type="button" onclick="searchSold()">🔎 eBay Sold検索</button>
@@ -150,7 +171,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </section>
 
 <section id="history" class="hidden"><div class="card"><h2>📋 履歴</h2><div id="historyList"></div></div></section>
-<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v4.7</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
+<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v4.8</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
 
 <div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
@@ -177,7 +198,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v4.7";
+const APP_VERSION="v4.8";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -489,6 +510,28 @@ function updateReversePrice(){
 }
 document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
 
+function getChecklistValues(){
+ const ids=["checkSold","checkCompetition","checkPrice","checkCosts","checkRestriction","checkItem","checkReturns"];
+ return Object.fromEntries(ids.map(id=>[id,!!document.getElementById(id)?.checked]));
+}
+function setChecklistValues(values){
+ const v=values||{};
+ ["checkSold","checkCompetition","checkPrice","checkCosts","checkRestriction","checkItem","checkReturns"].forEach(id=>{
+  const el=document.getElementById(id);if(el)el.checked=!!v[id];
+ });
+ updateChecklistStatus();
+}
+function updateChecklistStatus(){
+ const ids=["checkSold","checkCompetition","checkPrice","checkCosts","checkRestriction","checkItem","checkReturns"];
+ const done=ids.filter(id=>document.getElementById(id)?.checked).length;
+ const status=document.getElementById("checklistStatus");
+ if(status)status.textContent="チェック完了："+done+" / "+ids.length+(done===ids.length?"　✅ 全項目確認済み":"　あと"+(ids.length-done)+"項目");
+ const title=document.getElementById("checkItemTitle"),help=document.getElementById("checkItemHelp");
+ if(title&&help){
+  if(mode==="motors"){title.textContent="車種・型番・適合を確認";help.textContent="OEM番号、年式、世代、US市場への適合を確認";}
+  else {title.textContent="商品・型番・状態を確認";help.textContent="型番、付属品、状態、説明と写真の一致を確認";}
+ }
+}
 function bindAppEvents(){
  // 数値欄は初期値が0のとき、入力開始時に0を消して追加入力を防ぐ。
  // 例：0 → 1 → 10（01にならない）。空欄のまま離れた場合は0に戻す。
@@ -512,6 +555,9 @@ function bindAppEvents(){
  });
  document.querySelectorAll(".nav button[data-page]").forEach(btn=>{
    btn.addEventListener("click",()=>showPage(btn.dataset.page,btn));
+ });
+ document.querySelectorAll('#checklistItems input[type="checkbox"]').forEach(input=>{
+   input.addEventListener("change",updateChecklistStatus);
  });
  const quickBtn=document.getElementById("quickJudgeBtn");
  if(quickBtn) quickBtn.addEventListener("click",quickJudge);
@@ -587,6 +633,7 @@ function saveItem(){
     priority:r.priority||"",
     priorityRank:r.priorityRank,
     missingData:!!r.missingData,
+    prebuyChecklist:getChecklistValues(),
 
     restriction:val("restriction"),
     returnRisk:val("returnRisk"),
@@ -1053,6 +1100,9 @@ function editItem(index){
     v.usMarket
   );
 
+
+  /* 保存済みの仕入れ前チェックリストを復元 */
+  setChecklistValues(x.prebuyChecklist||{});
 
   /* 判定を再計算 */
 
