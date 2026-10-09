@@ -311,10 +311,9 @@ function quickJudge(){
     "<b>"+level+"</b><br>"+
     "商品: "+esc(product)+"<br>"+
     "専門: "+esc(fields[field]?.name||field)+"<br>"+
-    "利益: ¥"+Math.round(profit).toLocaleString()+"<br>"+
+    "仮の推定利益: ¥"+Math.round(profit).toLocaleString()+"<br>"+
     "Sell-through: "+sellRate.toFixed(1)+"%<br>"+
-    "スコア: "+score+"/7"+
-    "";
+    "スコア: "+score+"/7"+"<br><small>仮計算：為替150円・手数料15%。海外発送費、購入者送料、関税などは未反映です。登録画面で詳細を入力してください。</small>";
 }
 function quickToRegister(){
   const product=val("qProduct");
