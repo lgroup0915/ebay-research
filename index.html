@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="5.5">
+<meta name="app-version" content="5.7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -43,7 +43,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.5</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v5.5</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.7</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-10 / v5.7</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -107,9 +107,9 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <div class="field"><label>日本仕入価格（円）</label><input id="costJPY" type="number" inputmode="numeric" value="0"></div>
 <div class="field"><label>仕入先送料（円）</label><input id="shipJPY" type="number" inputmode="numeric" value="0"></div>
 <div class="field"><label>海外発送送料原価（円）</label><input id="outShipJPY" type="number" inputmode="numeric" value="0"></div>
-<div class="field"><label>セラー負担関税・税（円）</label><input id="tariffJPY" type="number" inputmode="numeric" value="0"></div>
+<div class="field"><label>セラー負担関税・税（円）</label><input id="tariffJPY" type="number" inputmode="numeric" value="0"><div class="small" style="margin-top:6px">関税率が不明な場合は、下の公式検索でHTSコードと税率を確認します。確認できるまでは推測で入力しないでください。</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><a class="btn secondary" style="display:inline-block;text-decoration:none;padding:10px 12px;font-size:13px" href="https://hts.usitc.gov/" target="_blank" rel="noopener">🇺🇸 HTS関税率検索</a><a class="btn secondary" style="display:inline-block;text-decoration:none;padding:10px 12px;font-size:13px" href="https://rulings.cbp.gov/" target="_blank" rel="noopener">🔎 CBP分類事例検索</a></div><div class="small" style="margin-top:6px">※品目分類・原産国・発送時点の制度で税率が変わることがあります。HTS検索結果だけで確定できない場合は専門家・通関業者に確認してください。</div></div>
 <div class="field"><label>重量（g）</label><input id="weight" type="number" inputmode="numeric" value="0"></div>
-<div class="field"><label>為替（1 USD = 円）</label><input id="fx" type="number" inputmode="decimal" value="150"></div>
+<div class="field"><label>為替（1 USD = 円）</label><input id="fx" type="number" inputmode="decimal" value="150"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px"><button class="btn secondary" type="button" onclick="refreshExchangeRate(true)" style="padding:9px 12px;font-size:13px">🔄 為替を更新</button><span id="fxStatus" class="small" style="align-self:center">為替レートを確認中…</span></div><div class="small" style="margin-top:5px">自動更新レートは参考値です。eBay決済時の実際の換算レート・手数料とは異なる場合があります。</div></div>
 </div>
 
 <div class="sectionTitle">⚠️ リスク・運用</div>
@@ -177,7 +177,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </section>
 
 <section id="history" class="hidden"><div class="card"><h2>📋 履歴・仕入れ候補一覧</h2><p class="small">候補を絞り込み、予想利益・仕入れ上限・上限との差額を比較できます。仕入れ上限は商品本体価格の目安です。</p><div class="field"><label for="historyFilter">表示する判断ステージ</label><select id="historyFilter"><option value="all">すべて表示</option><option value="candidate">① 仕入れ候補のみ</option><option value="research">② 追加調査のみ</option><option value="skip">③ 見送り・後回しのみ</option></select></div><div id="historySummary" class="small" style="margin:10px 0;font-weight:700" aria-live="polite"></div><div class="small" style="padding:10px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:10px">🏆 優先順位スコア：需要35点＋利益30点＋資金効率20点＋リスク確認15点＝100点。登録したSold数・出品数・費用・リスク項目からの目安です。Soldの調査期間や市場の変化も必ず確認してください。</div><div class="card" style="margin:12px 0;background:#f8fafc"><h3 style="margin-top:0">💴 仕入れ予算シミュレーション</h3><p class="small">①仕入れ候補に登録した商品から選択し、購入数を指定してください。仕入れ資金は商品代＋仕入先送料で計算します。販売後の予想利益は登録時の利益見積りを使用します。</p><div class="grid"><div class="field"><label for="budgetAmount">使える仕入れ予算（円）</label><input id="budgetAmount" type="number" min="0" step="1000" value="30000"></div><div class="field"><label for="budgetReserve">予備資金として残す額（円）</label><input id="budgetReserve" type="number" min="0" step="1000" value="3000"></div></div><div id="budgetSummary" aria-live="polite"></div><button class="btn secondary" type="button" style="width:100%;margin:8px 0" onclick="autoAllocateBudget()">🏆 ランキング上位から予算内で自動選択</button><div class="small">自動選択は候補を1個ずつ優先順位順に仮選択します。購入確定ではありません。数量はあとから変更できます。</div><div id="budgetCandidates"></div></div><div id="historyList"></div></div></section>
-<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v5.5</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
+<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v5.7</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
 
 <div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
@@ -204,7 +204,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v5.6";
+const APP_VERSION="v5.7";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -296,6 +296,9 @@ function syncMode(){
  document.getElementById("registerMode").textContent=fields[mode].name;
  document.getElementById("homeMode").textContent=fields[mode].name;
  document.getElementById("motorFields").style.display=mode==="motors"?"block":"none";
+ if(mode!=="motors"){
+   ["vehicleMaker","vehicleModel","year","generation","partClass","conditionType","partNumber","fitment","usMarket"].forEach(id=>setVal(id,""));
+ }
  const q=document.getElementById("qField");q.innerHTML=Object.entries(fields).map(([k,v])=>`<option value="${k}" ${k===mode?"selected":""}>${v.name}</option>`).join("");
  updateJudge();
 }
@@ -653,7 +656,7 @@ function saveItem(){
     returnRisk:val("returnRisk"),
     memo:val("memo"),
 
-    vehicle:{
+    vehicle:mode==="motors"?{
       maker:val("vehicleMaker"),
       model:val("vehicleModel"),
       year:val("year"),
@@ -663,7 +666,7 @@ function saveItem(){
       partNumber:val("partNumber"),
       fitment:val("fitment"),
       usMarket:val("usMarket")
-    }
+    } : {}
   };
 
 
@@ -794,6 +797,19 @@ function showDetail(index){
         ?"🟡 保留・追加調査"
         :"🔴 見送り";
   const purchaseStage=getPurchaseStage(x);
+  const vehicleSection=x.mode==="motors"?`
+    <div class="sectionTitle">🚗 車両・部品情報</div>
+    <div class="detail-grid">
+      ${detailItem("メーカー",vehicle.maker)}
+      ${detailItem("車種",vehicle.model)}
+      ${detailItem("年式",vehicle.year)}
+      ${detailItem("世代/型式",vehicle.generation)}
+      ${detailItem("部品分類",vehicle.partClass)}
+      ${detailItem("状態",vehicle.conditionType)}
+      ${detailItem("OEM/Part Number",vehicle.partNumber)}
+      ${detailItem("適合確認",vehicle.fitment)}
+      ${detailItem("US市場",vehicle.usMarket)}
+    </div>`:"";
 
 
   document.getElementById("detailBody").innerHTML=`
@@ -842,68 +858,7 @@ function showDetail(index){
     </div>
 
 
-    <div class="sectionTitle">
-      🚗 車両・部品情報
-    </div>
-
-    <div class="detail-grid">
-
-      ${detailItem("メーカー",vehicle.maker)}
-      ${detailItem("車種",vehicle.model)}
-      ${detailItem("年式",vehicle.year)}
-      ${detailItem("世代/型式",vehicle.generation)}
-      ${detailItem("部品分類",vehicle.partClass)}
-      ${detailItem("状態",vehicle.conditionType)}
-      ${detailItem("OEM/Part Number",vehicle.partNumber)}
-      ${detailItem("適合確認",vehicle.fitment)}
-      ${detailItem("US市場",vehicle.usMarket)}
-
-    </div>
-
-
-    <div class="sectionTitle">
-      📊 eBayデータ
-    </div>
-
-    <div class="detail-grid">
-
-      ${detailItem("Sold数",x.sold)}
-      ${detailItem("現在出品数",x.active)}
-      ${detailItem("販売価格 USD",x.saleUSD)}
-      ${detailItem("購入者送料 USD",x.buyerShipUSD)}
-
-      ${detailItem(
-        "日本仕入価格",
-        "¥"+Number(x.cost||0).toLocaleString()
-      )}
-
-      ${detailItem(
-        "仕入先送料",
-        "¥"+Number(x.ship||0).toLocaleString()
-      )}
-
-      ${detailItem(
-        "海外発送送料",
-        "¥"+Number(x.outShip||0).toLocaleString()
-      )}
-
-      ${detailItem(
-        "関税・税",
-        "¥"+Number(x.tariff||0).toLocaleString()
-      )}
-
-      ${detailItem(
-        "重量",
-        (x.weight||0)+" g"
-      )}
-
-      ${detailItem(
-        "為替",
-        "¥"+(x.fx||150)+"/USD"
-      )}
-
-    </div>
-
+    ${vehicleSection}
 
     <div class="sectionTitle">
       ⚠️ リスク・判定
@@ -1643,6 +1598,45 @@ function importData(){
 
 
 /* =========================
+   為替レート自動更新
+========================= */
+let fxRequestInProgress=false;
+async function refreshExchangeRate(showMessage=false){
+  const input=document.getElementById("fx");
+  const status=document.getElementById("fxStatus");
+  if(fxRequestInProgress||!input)return;
+  fxRequestInProgress=true;
+  if(status)status.textContent="最新レートを取得中…";
+  try{
+    const response=await fetch("https://open.er-api.com/v6/latest/USD",{cache:"no-store"});
+    if(!response.ok)throw new Error("為替データ取得失敗");
+    const data=await response.json();
+    const rate=Number(data?.rates?.JPY);
+    if(!Number.isFinite(rate)||rate<=0)throw new Error("為替レートが不正です");
+    input.value=rate.toFixed(2);
+    const updated=new Date();
+    localStorage.setItem("ebayFxRate",String(rate));
+    localStorage.setItem("ebayFxUpdated",updated.toISOString());
+    updateJudge();
+    if(status)status.textContent="更新："+updated.toLocaleString("ja-JP")+"（参考レート）";
+  }catch(error){
+    console.warn("為替自動更新に失敗しました",error);
+    const savedRate=Number(localStorage.getItem("ebayFxRate"));
+    const savedTime=localStorage.getItem("ebayFxUpdated");
+    if(savedRate>0&&(!Number(input.value)||Number(input.value)===150)){
+      input.value=savedRate.toFixed(2);
+      updateJudge();
+    }
+    if(status)status.textContent=savedTime
+      ?"取得失敗・保存済みレート："+new Date(savedTime).toLocaleString("ja-JP")
+      :"取得できません。為替を手入力してください。";
+    if(showMessage)alert("最新為替を取得できませんでした。通信状況を確認してください。入力中のレートは変更していません。");
+  }finally{
+    fxRequestInProgress=false;
+  }
+}
+
+/* =========================
    起動時処理
 ========================= */
 const researchDateInput=document.getElementById("researchDate");
@@ -1650,6 +1644,8 @@ if(researchDateInput&&!researchDateInput.value)researchDateInput.value=new Date(
 renderHome();
 syncMode();
 showPage("home",document.querySelector('.nav button[data-page="home"]'));
+refreshExchangeRate(false);
+setInterval(()=>{if(document.visibilityState==="visible")refreshExchangeRate(false);},30*60*1000);
 </script>
 </body>
 </html>
