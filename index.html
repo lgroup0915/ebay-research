@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="4.9">
+<meta name="app-version" content="5.5">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -43,7 +43,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.4</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v5.4</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.5</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v5.5</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -116,7 +116,9 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <div class="grid">
 <div class="field"><label>メーカー規制</label><select id="restriction"><option>問題なし</option><option>要確認</option><option>規制あり</option></select></div>
 <div class="field"><label>返品リスク</label><select id="returnRisk"><option>低</option><option>中</option><option>高</option></select></div>
-<div class="field full"><label>メモ</label><textarea id="memo" placeholder="仕入先・注意点・Redditで見た需要など"></textarea></div>
+<div class="field full"><label>仕入先候補URL</label><input id="sourceUrl" type="url" inputmode="url" placeholder="https://..."><div class="small">仕入先の商品ページ・購入候補のURL</div></div>
+<div class="field full"><label>eBay Sold / セラーハブリサーチURL</label><input id="soldUrl" type="url" inputmode="url" placeholder="https://..."><div class="small">Terapeak・Seller Hub Research・Sold検索結果などのURL</div></div>
+<div class="field full"><label>メモ</label><textarea id="memo" placeholder="注意点・仕入条件・Redditで見た需要など"></textarea></div>
 </div>
 
 <div class="sectionTitle">💰 判定条件</div>
@@ -171,7 +173,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </section>
 
 <section id="history" class="hidden"><div class="card"><h2>📋 履歴・仕入れ候補一覧</h2><p class="small">候補を絞り込み、予想利益・仕入れ上限・上限との差額を比較できます。仕入れ上限は商品本体価格の目安です。</p><div class="field"><label for="historyFilter">表示する判断ステージ</label><select id="historyFilter"><option value="all">すべて表示</option><option value="candidate">① 仕入れ候補のみ</option><option value="research">② 追加調査のみ</option><option value="skip">③ 見送り・後回しのみ</option></select></div><div id="historySummary" class="small" style="margin:10px 0;font-weight:700" aria-live="polite"></div><div class="small" style="padding:10px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:10px">🏆 優先順位スコア：需要35点＋利益30点＋資金効率20点＋リスク確認15点＝100点。登録したSold数・出品数・費用・リスク項目からの目安です。Soldの調査期間や市場の変化も必ず確認してください。</div><div class="card" style="margin:12px 0;background:#f8fafc"><h3 style="margin-top:0">💴 仕入れ予算シミュレーション</h3><p class="small">①仕入れ候補に登録した商品から選択し、購入数を指定してください。仕入れ資金は商品代＋仕入先送料で計算します。販売後の予想利益は登録時の利益見積りを使用します。</p><div class="grid"><div class="field"><label for="budgetAmount">使える仕入れ予算（円）</label><input id="budgetAmount" type="number" min="0" step="1000" value="30000"></div><div class="field"><label for="budgetReserve">予備資金として残す額（円）</label><input id="budgetReserve" type="number" min="0" step="1000" value="3000"></div></div><div id="budgetSummary" aria-live="polite"></div><button class="btn secondary" type="button" style="width:100%;margin:8px 0" onclick="autoAllocateBudget()">🏆 ランキング上位から予算内で自動選択</button><div class="small">自動選択は候補を1個ずつ優先順位順に仮選択します。購入確定ではありません。数量はあとから変更できます。</div><div id="budgetCandidates"></div></div><div id="historyList"></div></div></section>
-<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v5.4</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
+<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v5.5</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
 
 <div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
@@ -198,7 +200,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v5.4";
+const APP_VERSION="v5.5";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -610,6 +612,8 @@ function saveItem(){
     product:val("product"),
     keyword:val("keyword"),
     brand:val("brand"),
+    sourceUrl:val("sourceUrl").trim(),
+    soldUrl:val("soldUrl").trim(),
 
     sold:+val("sold"),
     active:+val("active"),
@@ -695,6 +699,51 @@ function saveItem(){
       '.nav button[data-page="history"]'
     )
   );
+}
+
+
+
+function getLegacyLinks(memo){
+  const urls=String(memo||"").match(/https?:\/\/[^\s<>"'）)]+/g)||[];
+  const result={sourceUrl:"",soldUrl:""};
+  for(const raw of urls){
+    const url=raw.replace(/[.,;，。]+$/,"");
+    if(!/^https?:\/\//i.test(url))continue;
+    let host="";
+    try{host=new URL(url).hostname.toLowerCase();}catch(e){continue;}
+    if((host.includes("ebay.")||host.includes("terapeak"))&&!result.soldUrl)result.soldUrl=url;
+    else if(!result.sourceUrl)result.sourceUrl=url;
+  }
+  return result;
+}
+function shortUrlLabel(value){
+  try{
+    const u=new URL(String(value||""));
+    if(u.protocol!=="http:"&&u.protocol!=="https:")return "";
+    const compact=u.hostname+(u.pathname||"/")+(u.search?"…":"");
+    return compact.length>38?compact.slice(0,35)+"…":compact;
+  }catch(e){return "";}
+}
+function renderSavedLinks(x,compact=false){
+  const links=[
+    {label:"仕入先候補",url:x.sourceUrl||getLegacyLinks(x.memo||"").sourceUrl},
+    {label:"eBay Sold / リサーチ",url:x.soldUrl||getLegacyLinks(x.memo||"").soldUrl}
+  ].filter(item=>item.url&&shortUrlLabel(item.url));
+  if(!links.length)return compact?"":'<div class="small">専用リンクは未登録です。</div>';
+  return '<div style="display:grid;gap:8px;margin:8px 0">'+links.map(item=>{
+    const label=shortUrlLabel(item.url);
+    return '<div style="padding:9px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;min-width:0"><div class="small" style="margin-bottom:4px">'+esc(item.label)+'</div><div style="display:flex;gap:7px;align-items:center;min-width:0"><a href="'+esc(item.url)+'" target="_blank" rel="noopener noreferrer" title="'+esc(item.url)+'" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1d4ed8;font-weight:700">'+esc(label)+'</a><button type="button" onclick="copySavedLink(this)" data-copy-url="'+esc(item.url)+'" style="width:auto;flex:0 0 auto;margin:0;padding:7px 9px;border:0;border-radius:8px;background:#e0e7ff;color:#1d4ed8;font-weight:700">コピー</button></div></div>';
+  }).join("")+'</div>';
+}
+async function copySavedLink(button){
+  const url=button?.dataset?.copyUrl;
+  if(!url)return;
+  try{
+    await navigator.clipboard.writeText(url);
+    const old=button.textContent;
+    button.textContent="コピー済み";
+    setTimeout(()=>{button.textContent=old||"コピー";},1400);
+  }catch(e){window.prompt("URLをコピーしてください",url);}
 }
 
 
@@ -874,6 +923,8 @@ function showDetail(index){
     </div>
 
 
+    <div class="sectionTitle">🔗 保存リンク</div>
+    ${renderSavedLinks(x)}
     <div class="sectionTitle">
       📝 メモ
     </div>
@@ -1008,6 +1059,9 @@ function editItem(index){
   setVal("product",x.product);
   setVal("keyword",x.keyword);
   setVal("brand",x.brand);
+  const legacyLinks=getLegacyLinks(x.memo||"");
+  setVal("sourceUrl",x.sourceUrl||legacyLinks.sourceUrl||"");
+  setVal("soldUrl",x.soldUrl||legacyLinks.soldUrl||"");
 
 
   /* eBayデータ */
@@ -1405,6 +1459,7 @@ function renderHistory(){
           <div class="small" style="margin-top:5px">仕入れ上限は、設定した手数料・送料・関税・目標利益を反映した商品本体価格の目安です。</div>
         </div>
         <div style="margin-top:8px;padding:10px;border-radius:10px;background:${finalWarnings.length?"#fff7ed":"#ecfdf3"};border:1px solid ${finalWarnings.length?"#fed7aa":"#a7f3d0"}"><div style="font-weight:800;color:${finalWarnings.length?"#b45309":"#047857"}">${finalWarnings.length?"⚠️ 仕入れ前の最終確認":"✅ 入力項目の最終確認OK"}</div>${finalWarnings.length?`<ul style="margin:6px 0 0;padding-left:20px">${finalWarnings.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`:"<div class=\"small\">登録データ上の警告はありません。購入直前に市場・送料・販売可否を再確認してください。</div>"}</div>
+        ${renderSavedLinks(x,true)}
         <div class="btnrow">
           <button class="btn secondary" type="button" onclick="showDetail(${index})">📋 詳細</button>
           <button class="btn primary" type="button" onclick="editItem(${index})">✏️ 編集</button>
