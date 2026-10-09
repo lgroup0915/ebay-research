@@ -43,7 +43,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.0</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v5.0</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.1</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v5.1</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -170,8 +170,8 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </div>
 </section>
 
-<section id="history" class="hidden"><div class="card"><h2>📋 履歴</h2><div id="historyList"></div></div></section>
-<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v5.0</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
+<section id="history" class="hidden"><div class="card"><h2>📋 履歴・仕入れ候補一覧</h2><p class="small">候補を絞り込み、予想利益・仕入れ上限・上限との差額を比較できます。仕入れ上限は商品本体価格の目安です。</p><div class="field"><label for="historyFilter">表示する判断ステージ</label><select id="historyFilter"><option value="all">すべて表示</option><option value="candidate">① 仕入れ候補のみ</option><option value="research">② 追加調査のみ</option><option value="skip">③ 見送り・後回しのみ</option></select></div><div id="historySummary" class="small" style="margin:10px 0;font-weight:700" aria-live="polite"></div><div id="historyList"></div></div></section>
+<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v5.1</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
 
 <div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
@@ -198,7 +198,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v5.0";
+const APP_VERSION="v5.1";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -1220,149 +1220,80 @@ function getResearchPriority(x){
   return {rank:3,label:"C：後回し候補",note:"利益や需要などに懸念があります。条件が改善したら再評価してください。"};
 }
 
-function renderHistory(){
-
-  const box=
-    document.getElementById(
-      "historyList"
-    );
-
-  if(!box)return;
-
-
-  if(!items.length){
-
-    box.innerHTML=`
-      <div class="small">
-        まだ登録履歴がありません。
-      </div>
-    `;
-
-    return;
-  }
-
-
-  box.innerHTML=
-    items.map((x,index)=>({x,index,priority:getResearchPriority(x),purchaseStage:getPurchaseStage(x)}))
-      .sort((a,b)=>a.purchaseStage.rank-b.purchaseStage.rank||a.priority.rank-b.priority.rank||Number(b.x.score||0)-Number(a.x.score||0)||Number(b.x.profit||0)-Number(a.x.profit||0))
-      .map(({x,index,priority,purchaseStage})=>{
-
-      const levelLabel=
-        x.level==="GO"
-          ?"🟢 候補"
-          :x.level==="KEEP"
-            ?"🟡 保留"
-            :"🔴 見送り";
-
-
-      const modeName=
-        fields[x.mode]?.name ||
-        x.mode ||
-        "不明";
-
-
-      const date=x.time
-        ?new Date(x.time)
-          .toLocaleString("ja-JP")
-        :"日時不明";
-
-      const checklistIds=["checkSold","checkCompetition","checkPrice","checkCosts","checkRestriction","checkItem","checkReturns"];
-      const checklist=x.prebuyChecklist;
-      const checkedCount=checklist&&typeof checklist==="object"
-        ?checklistIds.filter(id=>checklist[id]===true).length
-        :0;
-      const checklistStatus=!checklist||typeof checklist!=="object"
-        ?{label:"📝 チェック未記録",color:"#667085",note:"この履歴はチェックリスト保存前の記録です。"}
-        :checkedCount===7
-          ?{label:"✅ 全7項目確認済み",color:"#047857",note:"仕入れ前チェック完了"}
-          :{label:"⚠️ 未確認項目あり："+checkedCount+"/7",color:"#b45309",note:"仕入れ前に残りの項目を確認してください。"};
-
-
-      return `
-
-        <div class="history-card">
-
-          <div style="
-            font-size:18px;
-            font-weight:800;
-          ">
-            ${esc(
-              x.product||
-              "商品名未入力"
-            )}
-          </div>
-
-
-          <div class="small"
-               style="margin-top:5px">
-            ${esc(modeName)}
-            ／ ${date}
-          </div>
-
-
-          <div style="
-            margin-top:8px;
-            font-weight:700;
-          ">
-            ${levelLabel}
-          </div>
-          <div style="margin-top:5px;font-weight:800;color:${purchaseStage.color}">${purchaseStage.label}</div>
-          <div class="small" style="margin-top:3px">${esc(purchaseStage.note)}</div>
-          <div style="margin-top:5px;font-weight:700">${esc(priority.label)}</div>
-          <div style="margin-top:8px;padding:9px 10px;border-radius:10px;background:#f8fafc;color:${checklistStatus.color};font-weight:800">
-            ${checklistStatus.label}
-            <div class="small" style="margin-top:3px;font-weight:400">${checklistStatus.note}</div>
-          </div>
-
-          <div style="
-            margin-top:5px;
-          ">
-            推定利益：
-            <b>
-              ¥${Number(
-                x.profit||0
-              ).toLocaleString()}
-            </b>
-          </div>
-
-
-          <div class="btnrow">
-
-            <button
-              class="btn secondary"
-              type="button"
-              onclick="showDetail(${index})">
-              📋 詳細
-            </button>
-
-            <button
-              class="btn primary"
-              type="button"
-              onclick="editItem(${index})">
-              ✏️ 編集
-            </button>
-
-          </div>
-
-
-          <button
-            class="btn secondary"
-            type="button"
-            style="
-              width:100%;
-              margin-top:10px;
-            "
-            onclick="deleteItem(${index})">
-            🗑️ 削除
-          </button>
-
-        </div>
-
-      `;
-
-    }).join("");
+function getSavedMaxCost(x){
+ const fx=Number(x.fx)||150;
+ const feeRate=Math.max(0,Number(x.feeRate??15));
+ const fee=Math.min(feeRate,100)/100;
+ const sale=Math.max(0,Number(x.saleUSD)||0);
+ const buyerShip=Math.max(0,Number(x.buyerShipUSD)||0);
+ const ship=Math.max(0,Number(x.ship)||0);
+ const outShip=Math.max(0,Number(x.outShip)||0);
+ const tariff=Math.max(0,Number(x.tariff)||0);
+ const target=Math.max(Math.max(0,Number(x.minProfit??1000)),fields[x.mode]?.goal||0);
+ if(fx<=0||fee>=1||sale<=0)return null;
+ return Math.floor((sale+buyerShip)*fx*(1-fee)-ship-outShip-tariff-target);
 }
 
+function renderHistory(){
+  const box=document.getElementById("historyList");
+  if(!box)return;
+  const filterEl=document.getElementById("historyFilter");
+  const filter=filterEl?.value||"all";
+  const records=items.map((x,index)=>({x,index,priority:getResearchPriority(x),purchaseStage:getPurchaseStage(x),maxCost:getSavedMaxCost(x)}))
+    .filter(row=>filter==="all"||row.purchaseStage.key===filter)
+    .sort((a,b)=>a.purchaseStage.rank-b.purchaseStage.rank||a.priority.rank-b.priority.rank||Number(b.x.score||0)-Number(a.x.score||0)||Number(b.x.profit||0)-Number(a.x.profit||0));
+  const summary=document.getElementById("historySummary");
+  if(summary){
+    const candidateCount=items.filter(x=>getPurchaseStage(x).key==="candidate").length;
+    const researchCount=items.filter(x=>getPurchaseStage(x).key==="research").length;
+    const skipCount=items.filter(x=>getPurchaseStage(x).key==="skip").length;
+    summary.textContent=`全${items.length}件｜①候補 ${candidateCount}件｜②追加調査 ${researchCount}件｜③見送り ${skipCount}件｜表示 ${records.length}件`;
+  }
+  if(!items.length){box.innerHTML='<div class="small">まだ登録履歴がありません。</div>';return;}
+  if(!records.length){box.innerHTML='<div class="small">このステージに該当する商品はありません。表示条件を変更してください。</div>';return;}
+  box.innerHTML=records.map(({x,index,priority,purchaseStage,maxCost})=>{
+    const levelLabel=x.level==="GO"?"🟢 候補":x.level==="KEEP"?"🟡 保留":"🔴 見送り";
+    const modeName=fields[x.mode]?.name||x.mode||"不明";
+    const date=x.time?new Date(x.time).toLocaleString("ja-JP"):"日時不明";
+    const checklistIds=["checkSold","checkCompetition","checkPrice","checkCosts","checkRestriction","checkItem","checkReturns"];
+    const checklist=x.prebuyChecklist;
+    const checkedCount=checklist&&typeof checklist==="object"?checklistIds.filter(id=>checklist[id]===true).length:0;
+    const checklistStatus=!checklist||typeof checklist!=="object"
+      ?{label:"📝 チェック未記録",color:"#667085",note:"この履歴はチェックリスト保存前の記録です。"}
+      :checkedCount===7
+        ?{label:"✅ 全7項目確認済み",color:"#047857",note:"仕入れ前チェック完了"}
+        :{label:"⚠️ 未確認項目あり："+checkedCount+"/7",color:"#b45309",note:"仕入れ前に残りの項目を確認してください。"};
+    const hasCost=Number(x.cost)>0;
+    const difference=maxCost===null||!hasCost?null:maxCost-Number(x.cost);
+    const capText=maxCost===null?"算出不可":maxCost>=0?"¥"+maxCost.toLocaleString():"¥0以下";
+    const differenceLabel=difference===null?"上限との差額：—":difference>=0?"上限までの余裕：":"上限超過：";
+    const differenceText=difference===null?"仕入価格・販売価格を確認":(difference>=0?"+":"−")+"¥"+Math.abs(difference).toLocaleString();
+    return `
+      <div class="history-card">
+        <div style="font-size:18px;font-weight:800">${esc(x.product||"商品名未入力")}</div>
+        <div class="small" style="margin-top:5px">${esc(modeName)} ／ ${date}</div>
+        <div style="margin-top:8px;font-weight:700">${levelLabel}</div>
+        <div style="margin-top:5px;font-weight:800;color:${purchaseStage.color}">${purchaseStage.label}</div>
+        <div class="small" style="margin-top:3px">${esc(purchaseStage.note)}</div>
+        <div style="margin-top:5px;font-weight:700">${esc(priority.label)}</div>
+        <div style="margin-top:8px;padding:9px 10px;border-radius:10px;background:#f8fafc;color:${checklistStatus.color};font-weight:800">
+          ${checklistStatus.label}<div class="small" style="margin-top:3px;font-weight:400">${checklistStatus.note}</div>
+        </div>
+        <div style="margin-top:8px;padding:10px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0">
+          <div>予想利益：<b>¥${Number(x.profit||0).toLocaleString()}</b></div>
+          <div style="margin-top:5px">目標利益を守る仕入れ上限：<b>${capText}</b></div>
+          <div style="margin-top:5px">${differenceLabel}<b>${differenceText}</b></div>
+          <div class="small" style="margin-top:5px">仕入れ上限は、設定した手数料・送料・関税・目標利益を反映した商品本体価格の目安です。</div>
+        </div>
+        <div class="btnrow">
+          <button class="btn secondary" type="button" onclick="showDetail(${index})">📋 詳細</button>
+          <button class="btn primary" type="button" onclick="editItem(${index})">✏️ 編集</button>
+        </div>
+        <button class="btn secondary" type="button" style="width:100%;margin-top:10px" onclick="deleteItem(${index})">🗑️ 削除</button>
+      </div>`;
+  }).join("");
+  if(filterEl&&!filterEl.dataset.bound){filterEl.addEventListener("change",renderHistory);filterEl.dataset.bound="1";}
+}
 
 /* =========================
    データ書き出し
