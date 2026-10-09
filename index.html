@@ -489,8 +489,8 @@ function saveItem(){
     weight:+val("weight"),
     fx:+val("fx")||150,
 
-    feeRate:+val("feeRate")||15,
-    minProfit:+val("minProfit")||1000,
+    feeRate:val("feeRate")===""?15:Number(val("feeRate")),
+    minProfit:val("minProfit")===""?1000:Number(val("minProfit")),
 
     profit:Math.round(r.profit),
     sellRate:r.sellRate,
@@ -707,13 +707,13 @@ function showDetail(index){
 
       ${detailItem(
         "手数料率",
-        (x.feeRate||15)+"%"
+        (x.feeRate===undefined?15:x.feeRate)+"%"
       )}
 
       ${detailItem(
         "最低目標利益",
         "¥"+Number(
-          x.minProfit||1000
+          x.minProfit===undefined?1000:x.minProfit
         ).toLocaleString()
       )}
 
@@ -904,12 +904,12 @@ function editItem(index){
 
   setVal(
     "feeRate",
-    x.feeRate||15
+    x.feeRate===undefined?15:x.feeRate
   );
 
   setVal(
     "minProfit",
-    x.minProfit||1000
+    x.minProfit===undefined?1000:x.minProfit
   );
 
 
