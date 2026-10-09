@@ -43,7 +43,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.1</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v5.1</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.2</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v5.2</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -170,8 +170,8 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </div>
 </section>
 
-<section id="history" class="hidden"><div class="card"><h2>📋 履歴・仕入れ候補一覧</h2><p class="small">候補を絞り込み、予想利益・仕入れ上限・上限との差額を比較できます。仕入れ上限は商品本体価格の目安です。</p><div class="field"><label for="historyFilter">表示する判断ステージ</label><select id="historyFilter"><option value="all">すべて表示</option><option value="candidate">① 仕入れ候補のみ</option><option value="research">② 追加調査のみ</option><option value="skip">③ 見送り・後回しのみ</option></select></div><div id="historySummary" class="small" style="margin:10px 0;font-weight:700" aria-live="polite"></div><div id="historyList"></div></div></section>
-<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v5.1</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
+<section id="history" class="hidden"><div class="card"><h2>📋 履歴・仕入れ候補一覧</h2><p class="small">候補を絞り込み、予想利益・仕入れ上限・上限との差額を比較できます。仕入れ上限は商品本体価格の目安です。</p><div class="field"><label for="historyFilter">表示する判断ステージ</label><select id="historyFilter"><option value="all">すべて表示</option><option value="candidate">① 仕入れ候補のみ</option><option value="research">② 追加調査のみ</option><option value="skip">③ 見送り・後回しのみ</option></select></div><div id="historySummary" class="small" style="margin:10px 0;font-weight:700" aria-live="polite"></div><div class="card" style="margin:12px 0;background:#f8fafc"><h3 style="margin-top:0">💴 仕入れ予算シミュレーション</h3><p class="small">①仕入れ候補に登録した商品から選択し、購入数を指定してください。仕入れ資金は商品代＋仕入先送料で計算します。販売後の予想利益は登録時の利益見積りを使用します。</p><div class="grid"><div class="field"><label for="budgetAmount">使える仕入れ予算（円）</label><input id="budgetAmount" type="number" min="0" step="1000" value="30000"></div><div class="field"><label for="budgetReserve">予備資金として残す額（円）</label><input id="budgetReserve" type="number" min="0" step="1000" value="3000"></div></div><div id="budgetSummary" aria-live="polite"></div><div id="budgetCandidates"></div></div><div id="historyList"></div></div></section>
+<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v5.2</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
 
 <div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
@@ -198,7 +198,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v5.1";
+const APP_VERSION="v5.2";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -1234,7 +1234,61 @@ function getSavedMaxCost(x){
  return Math.floor((sale+buyerShip)*fx*(1-fee)-ship-outShip-tariff-target);
 }
 
+function getBudgetSettings(){
+ let saved={};
+ try{saved=JSON.parse(localStorage.getItem("ebayBudgetSettings")||"{}")||{};}catch(e){}
+ return {budget:Math.max(0,Number(saved.budget??30000)||0),reserve:Math.max(0,Number(saved.reserve??3000)||0),selected:saved.selected&&typeof saved.selected==="object"?saved.selected:{}};
+}
+function saveBudgetSettings(settings){
+ localStorage.setItem("ebayBudgetSettings",JSON.stringify(settings));
+}
+function renderBudgetSimulator(){
+ const panel=document.getElementById("budgetCandidates");
+ const summary=document.getElementById("budgetSummary");
+ const budgetEl=document.getElementById("budgetAmount");
+ const reserveEl=document.getElementById("budgetReserve");
+ if(!panel||!summary||!budgetEl||!reserveEl)return;
+ const settings=getBudgetSettings();
+ if(!budgetEl.dataset.initialized){budgetEl.value=settings.budget;budgetEl.dataset.initialized="1";}
+ if(!reserveEl.dataset.initialized){reserveEl.value=settings.reserve;reserveEl.dataset.initialized="1";}
+ const budget=Math.max(0,Number(budgetEl.value)||0);
+ const reserve=Math.max(0,Number(reserveEl.value)||0);
+ const usable=Math.max(0,budget-reserve);
+ const candidates=items.map((x,index)=>({x,index,stage:getPurchaseStage(x)})).filter(row=>row.stage.key==="candidate");
+ let invested=0,expectedProfit=0,selectedCount=0,overBudget=false;
+ const rows=candidates.map(({x,index})=>{
+   const id=String(x.id??index);
+   const selected=!!settings.selected[id]?.checked;
+   const qty=Math.max(1,Math.floor(Number(settings.selected[id]?.qty)||1));
+   const unit=Math.max(0,Number(x.cost)||0)+Math.max(0,Number(x.ship)||0);
+   if(selected){invested+=unit*qty;expectedProfit+=Number(x.profit||0)*qty;selectedCount+=qty;}
+   return {x,index,id,selected,qty,unit};
+ });
+ overBudget=invested>usable;
+ summary.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:10px 0"><div style="padding:10px;background:white;border:1px solid #dbe3ee;border-radius:9px"><div class="small">予算 − 予備資金</div><b>¥${usable.toLocaleString()}</b></div><div style="padding:10px;background:white;border:1px solid #dbe3ee;border-radius:9px"><div class="small">選択商品の仕入れ資金</div><b>¥${invested.toLocaleString()}</b></div><div style="padding:10px;background:white;border:1px solid #dbe3ee;border-radius:9px"><div class="small">仕入れ後の残額</div><b>¥${(budget-invested).toLocaleString()}</b></div><div style="padding:10px;background:white;border:1px solid #dbe3ee;border-radius:9px"><div class="small">販売後の予想利益合計</div><b>¥${expectedProfit.toLocaleString()}</b></div></div><div style="font-weight:800;color:${overBudget?"#b42318":invested>0?"#047857":"#475467"}">${overBudget?"⚠️ 予算超過：予備資金を除いた枠を超えています。":invested>0?"✅ 予算内です。":"商品を選ぶと資金配分を試算できます。"}</div><div class="small" style="margin-top:4px">選択数：${selectedCount}個／候補商品：${candidates.length}件。予想利益は販売できた場合の見積りで、売上や利益を保証するものではありません。</div>`;
+ if(!candidates.length){panel.innerHTML='<div class="small" style="padding:10px 0">現在「① 仕入れ候補」に該当する商品はありません。履歴にある商品を編集し、仕入れ前チェック7項目と判定データを確認して保存してください。</div>';}
+ else{
+ panel.innerHTML=rows.map(({x,index,id,selected,qty,unit})=>`<div style="padding:10px 0;border-top:1px solid #e2e8f0"><label style="display:flex;gap:8px;align-items:flex-start;font-weight:800"><input type="checkbox" data-budget-id="${esc(id)}" data-budget-kind="checked" ${selected?"checked":""} style="margin-top:4px"><span>${esc(x.product||"商品名未入力")}</span></label><div class="small" style="margin:5px 0 7px 24px">1個の仕入れ資金：¥${unit.toLocaleString()}（商品代＋仕入先送料）／予想利益：¥${Number(x.profit||0).toLocaleString()}</div><div style="display:flex;gap:8px;align-items:center;margin-left:24px"><label for="budgetQty-${esc(id)}" class="small">購入数</label><input id="budgetQty-${esc(id)}" type="number" min="1" max="30" step="1" value="${qty}" data-budget-id="${esc(id)}" data-budget-kind="qty" style="width:90px;padding:8px;border:1px solid #cbd5e1;border-radius:8px"><span class="small">小計：¥${(unit*qty).toLocaleString()}</span></div></div>`).join("");
+ }
+ const persist=()=>{
+   const next=getBudgetSettings();
+   next.budget=Math.max(0,Number(budgetEl.value)||0);
+   next.reserve=Math.max(0,Number(reserveEl.value)||0);
+   panel.querySelectorAll("[data-budget-id]").forEach(el=>{
+     const id=el.getAttribute("data-budget-id");
+     next.selected[id]=next.selected[id]||{checked:false,qty:1};
+     if(el.dataset.budgetKind==="checked")next.selected[id].checked=el.checked;
+     if(el.dataset.budgetKind==="qty")next.selected[id].qty=Math.min(30,Math.max(1,Math.floor(Number(el.value)||1)));
+   });
+   saveBudgetSettings(next);
+   renderBudgetSimulator();
+ };
+ if(!budgetEl.dataset.bound){budgetEl.addEventListener("change",persist);budgetEl.dataset.bound="1";}
+ if(!reserveEl.dataset.bound){reserveEl.addEventListener("change",persist);reserveEl.dataset.bound="1";}
+ if(!panel.dataset.bound){panel.addEventListener("change",persist);panel.dataset.bound="1";}
+}
 function renderHistory(){
+  renderBudgetSimulator();
   const box=document.getElementById("historyList");
   if(!box)return;
   const filterEl=document.getElementById("historyFilter");
