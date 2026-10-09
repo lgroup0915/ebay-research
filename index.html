@@ -263,10 +263,29 @@ function quickJudge(){
   result.innerHTML=
     "<b>"+level+"</b><br>"+
     "商品: "+esc(product)+"<br>"+
-    "専門: "+esc(field)+"<br>"+
+    "専門: "+esc(fields[field]?.name||field)+"<br>"+
     "利益: ¥"+Math.round(profit).toLocaleString()+"<br>"+
     "Sell-through: "+sellRate.toFixed(1)+"%<br>"+
-    "スコア: "+score+"/7";
+    "スコア: "+score+"/7"+
+    '<button type="button" class="btn primary" id="quickToRegisterBtn" style="width:100%;margin-top:12px">➕ 詳細を登録画面へ引き継ぐ</button>';
+  document.getElementById("quickToRegisterBtn")?.addEventListener("click",quickToRegister);
+}
+function quickToRegister(){
+  const product=val("qProduct");
+  const selectedMode=val("qField");
+  if(fields[selectedMode]){
+    mode=selectedMode;
+    localStorage.setItem("ebayMode",mode);
+  }
+  syncMode();
+  document.getElementById("product").value=product;
+  document.getElementById("sold").value=val("qSold")||"0";
+  document.getElementById("active").value=val("qActive")||"0";
+  document.getElementById("saleUSD").value=val("qSale")||"0";
+  document.getElementById("costJPY").value=val("qCost")||"0";
+  updateJudge();
+  showPage("register",document.querySelector('.nav button[data-page="register"]'));
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 function searchSold(){
   const keyword=val("qProduct") || val("qField");
