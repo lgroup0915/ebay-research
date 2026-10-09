@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="5.7">
+<meta name="app-version" content="5.8">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -43,7 +43,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.7</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-10 / v5.7</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.8</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-10 / v5.7</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -108,6 +108,25 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <div class="field"><label>仕入先送料（円）</label><input id="shipJPY" type="number" inputmode="numeric" value="0"></div>
 <div class="field"><label>海外発送送料原価（円）</label><input id="outShipJPY" type="number" inputmode="numeric" value="0"></div>
 <div class="field"><label>セラー負担関税・税（円）</label><input id="tariffJPY" type="number" inputmode="numeric" value="0"><div class="small" style="margin-top:6px">関税率が不明な場合は、下の公式検索でHTSコードと税率を確認します。確認できるまでは推測で入力しないでください。</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><a class="btn secondary" style="display:inline-block;text-decoration:none;padding:10px 12px;font-size:13px" href="https://hts.usitc.gov/" target="_blank" rel="noopener">🇺🇸 HTS関税率検索</a><a class="btn secondary" style="display:inline-block;text-decoration:none;padding:10px 12px;font-size:13px" href="https://rulings.cbp.gov/" target="_blank" rel="noopener">🔎 CBP分類事例検索</a></div><div class="small" style="margin-top:6px">※品目分類・原産国・発送時点の制度で税率が変わることがあります。HTS検索結果だけで確定できない場合は専門家・通関業者に確認してください。</div></div>
+<div class="field full" style="border:1px solid #cbd5e1;border-radius:12px;padding:12px;background:#f8fafc">
+ <div style="font-weight:800;margin-bottom:6px">🔎 HS / HTSコード候補検索</div>
+ <div class="small" style="margin-bottom:10px">商品名・用途・材質から公式検索用キーワードを作ります。結果は候補であり、自動確定ではありません。</div>
+ <div class="grid">
+  <div class="field"><label>商品用途</label><input id="hsUse" placeholder="例：automotive key blank"></div>
+  <div class="field"><label>材質・構造</label><input id="hsMaterial" placeholder="例：metal, uncut key"></div>
+  <div class="field"><label>原産国</label><select id="hsOrigin"><option value="Japan">日本（Japan）</option><option value="China">中国（China）</option><option value="Other">その他・未確認</option></select></div>
+  <div class="field"><label>輸出先</label><select id="hsDestination"><option value="US">アメリカ（US）</option></select></div>
+  <div class="field full"><label>候補HS / HTSコード（手入力で保存）</label><input id="hsCode" placeholder="公式検索で確認したコード。未確認なら空欄"></div>
+  <div class="field full"><label>確認状況</label><select id="hsStatus"><option value="未確認">未確認</option><option value="候補あり・要確認">候補あり・要確認</option><option value="公式情報を確認">公式情報を確認</option><option value="専門家に確認">専門家に確認</option></select></div>
+ </div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+  <button class="btn primary" type="button" onclick="searchHsCode('hts')" style="padding:10px 12px;font-size:13px">🇺🇸 HTS候補を検索</button>
+  <button class="btn secondary" type="button" onclick="searchHsCode('cross')" style="padding:10px 12px;font-size:13px">🔎 税関分類事例</button>
+  <button class="btn secondary" type="button" onclick="searchHsCode('jp')" style="padding:10px 12px;font-size:13px">🇯🇵 日本税関事例</button>
+ </div>
+ <div id="hsSearchStatus" class="small" style="margin-top:8px" aria-live="polite">商品名・用途・材質を入力して検索してください。</div>
+ <div class="small" style="margin-top:7px">⚠️ 商品名だけでコード・税率は確定できません。米国HTSは改訂されるため、公式情報の確認日と適用条件を確認してください。</div>
+</div>
 <div class="field"><label>重量（g）</label><input id="weight" type="number" inputmode="numeric" value="0"></div>
 <div class="field"><label>為替（1 USD = 円）</label><input id="fx" type="number" inputmode="decimal" value="150"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:7px"><button class="btn secondary" type="button" onclick="refreshExchangeRate(true)" style="padding:9px 12px;font-size:13px">🔄 為替を更新</button><span id="fxStatus" class="small" style="align-self:center">為替レートを確認中…</span></div><div class="small" style="margin-top:5px">自動更新レートは参考値です。eBay決済時の実際の換算レート・手数料とは異なる場合があります。</div></div>
 </div>
@@ -633,6 +652,12 @@ function saveItem(){
     ship:+val("shipJPY"),
     outShip:+val("outShipJPY"),
     tariff:+val("tariffJPY"),
+    hsUse:val("hsUse").trim(),
+    hsMaterial:val("hsMaterial").trim(),
+    hsOrigin:val("hsOrigin"),
+    hsDestination:val("hsDestination"),
+    hsCode:val("hsCode").trim(),
+    hsStatus:val("hsStatus"),
 
     weight:+val("weight"),
     fx:+val("fx")||150,
@@ -860,6 +885,17 @@ function showDetail(index){
 
     ${vehicleSection}
 
+    <div class="sectionTitle">🌐 HS / HTSコード・関税確認</div>
+    <div class="detail-grid">
+      ${detailItem("商品用途",x.hsUse)}
+      ${detailItem("材質・構造",x.hsMaterial)}
+      ${detailItem("原産国",x.hsOrigin||"未入力")}
+      ${detailItem("輸出先",x.hsDestination||"US")}
+      ${detailItem("HS / HTSコード",x.hsCode)}
+      ${detailItem("確認状況",x.hsStatus||"未確認")}
+    </div>
+    <div class="small" style="margin-top:5px">※確認状況は記録用です。コード・税率の正確性を自動保証するものではありません。</div>
+
     <div class="sectionTitle">
       ⚠️ リスク・判定
     </div>
@@ -1062,6 +1098,12 @@ function editItem(index){
   setVal("shipJPY",x.ship);
   setVal("outShipJPY",x.outShip);
   setVal("tariffJPY",x.tariff);
+  setVal("hsUse",x.hsUse||"");
+  setVal("hsMaterial",x.hsMaterial||"");
+  setVal("hsOrigin",x.hsOrigin||"Japan");
+  setVal("hsDestination",x.hsDestination||"US");
+  setVal("hsCode",x.hsCode||"");
+  setVal("hsStatus",x.hsStatus||"未確認");
 
   setVal("weight",x.weight);
   setVal("fx",x.fx||150);
@@ -1634,6 +1676,29 @@ async function refreshExchangeRate(showMessage=false){
   }finally{
     fxRequestInProgress=false;
   }
+}
+
+/* =========================
+   HS / HTS候補検索リンク
+========================= */
+function searchHsCode(source){
+ const product=String(val("product")||"").trim();
+ const use=String(val("hsUse")||"").trim();
+ const material=String(val("hsMaterial")||"").trim();
+ const brand=String(val("brand")||"").trim();
+ const query=[product,use,material,brand].filter(Boolean).join(" ").trim();
+ const status=document.getElementById("hsSearchStatus");
+ if(!query){
+  if(status)status.textContent="商品名、用途、材質のいずれかを入力してください。";
+  alert("先に商品名・用途・材質のいずれかを入力してください。");
+  return;
+ }
+ let url="";
+ if(source==="hts")url="https://hts.usitc.gov/search?query="+encodeURIComponent(query);
+ else if(source==="cross")url="https://rulings.cbp.gov/search?term="+encodeURIComponent(query);
+ else url="https://www.customs.go.jp/searchsv/jitsv002.jsp";
+ if(status)status.textContent="検索語："+query+" ／ 公式サイトで候補を確認し、コードと確認状況を保存してください。";
+ window.open(url,"_blank","noopener");
 }
 
 /* =========================
