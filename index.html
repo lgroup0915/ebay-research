@@ -20,7 +20,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 .result{border-radius:18px;padding:16px;margin-top:14px;background:#f8fafc}.result.go{background:#ecfdf3}.result.keep{background:#fffbeb}.result.stop{background:#fef2f2}.result h2{margin:0 0 6px}
 .badge{display:inline-block;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px;background:#fff}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}.metric{background:#f8fafc;border-radius:14px;padding:12px}.metric b{display:block;font-size:19px;margin-top:4px}.metric span{font-size:12px;color:#667085}
 .specialties{display:grid;grid-template-columns:1fr 1fr;gap:10px}.specialty{border:1px solid #e1e5ec;background:#fff;border-radius:16px;padding:14px;text-align:left;font-size:15px}.specialty.active{border:2px solid #2563eb;background:#eff6ff}
-.keyword{display:inline-block;background:#eef2ff;color:#334155;border-radius:999px;padding:7px 10px;margin:4px;font-size:13px}
+.keyword{display:inline-flex;align-items:center;gap:6px;background:#eef2ff;color:#334155;border:1px solid #dbe4ff;border-radius:999px;padding:9px 12px;margin:4px;font-size:13px;cursor:pointer}.keyword:active{background:#dbeafe;transform:scale(.98)}.copy-status{min-height:20px;margin-top:8px;font-size:13px;color:#047857}
 .hidden{display:none!important}.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:9px 14px;border-top:1px solid #ddd;display:flex;gap:10px;z-index:10}.bottom button{flex:1;border:0;border-radius:14px;padding:13px;font-weight:700;background:#eef2f7}
 
 .history-card{border:1px solid #e5e7eb;border-radius:16px;padding:14px;margin:10px 0;background:#fff}
@@ -63,7 +63,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </div>
 </div>
 <div class="card">
-<h2>🔍 この分野の保存キーワード</h2><div id="keywords"></div>
+<h2>🔍 この分野の保存キーワード</h2><div class="small">キーワードをタップするとコピーできます。</div><div id="keywords"></div><div id="keywordCopyStatus" class="copy-status" aria-live="polite"></div>
 </div>
 </section>
 
@@ -208,11 +208,31 @@ function renderHome(){
  Object.entries(fields).forEach(([k,v])=>{
   const b=document.createElement("button");b.type="button";b.className="specialty"+(k===mode?" active":"");b.textContent=v.name;b.onclick=()=>setMode(k);box.appendChild(b);
  });
- document.getElementById("keywords").innerHTML=fields[mode].keys.map(x=>`<span class="keyword">${x}</span>`).join("");
+ document.getElementById("keywords").innerHTML=fields[mode].keys.map((x,i)=>`<button type="button" class="keyword" data-keyword-index="${i}" aria-label="${esc(x)}をコピー">📋 ${esc(x)}</button>`).join("");
+ document.querySelectorAll("#keywords .keyword").forEach((b,i)=>b.addEventListener("click",()=>copyKeyword(fields[mode].keys[i])));
  const today=new Date().toDateString(), arr=items.filter(x=>new Date(x.time).toDateString()===today);
  document.getElementById("countToday").textContent=arr.length;
  const c=arr.filter(x=>x.level==="GO").length;document.getElementById("candidateToday").textContent=c;
  const profits=arr.map(x=>x.profit).filter(x=>Number.isFinite(x));document.getElementById("avgProfit").textContent="¥"+(profits.length?Math.round(profits.reduce((a,b)=>a+b,0)/profits.length):0).toLocaleString();
+}
+async function copyKeyword(keyword){
+ const status=document.getElementById("keywordCopyStatus");
+ try{
+  if(navigator.clipboard && window.isSecureContext){
+   await navigator.clipboard.writeText(keyword);
+  }else{
+   const area=document.createElement("textarea");
+   area.value=keyword;area.setAttribute("readonly","");
+   area.style.position="fixed";area.style.opacity="0";
+   document.body.appendChild(area);area.select();
+   const copied=document.execCommand("copy");area.remove();
+   if(!copied)throw new Error("copy failed");
+  }
+  if(status)status.textContent="✅ コピーしました： "+keyword;
+ }catch(e){
+  if(status)status.textContent="コピーできませんでした。キーワードを長押ししてコピーしてください。";
+  console.warn("キーワードのコピーに失敗しました",e);
+ }
 }
 function syncMode(){
  document.getElementById("registerMode").textContent=fields[mode].name;
