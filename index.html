@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="4.4">
+<meta name="app-version" content="4.5">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -37,7 +37,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v4.4</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v4.4</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v4.5</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-09 / v4.5</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -150,7 +150,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </section>
 
 <section id="history" class="hidden"><div class="card"><h2>📋 履歴</h2><div id="historyList"></div></div></section>
-<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v4.4</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
+<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v4.5</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
 
 <div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
@@ -177,7 +177,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v4.4";
+const APP_VERSION="v4.5";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -424,36 +424,58 @@ function updateJudge(){
 }
 
 function updateReversePrice(){
- const box=document.getElementById("priceReverse");
- if(!box)return;
- const cost=Math.max(0,+val("costJPY")||0);
- const ship=Math.max(0,+val("shipJPY")||0);
- const outShip=Math.max(0,+val("outShipJPY")||0);
- const tariff=Math.max(0,+val("tariffJPY")||0);
- const buyerShip=Math.max(0,+val("buyerShipUSD")||0);
- const fx=val("fx")===""?150:(+val("fx")||150);
- const feeRate=val("feeRate")===""?15:Math.max(0,+val("feeRate")||0);
- const fee=Math.min(feeRate,100)/100;
- const targets=[1000,1500,2000];
- const fieldGoal=fields[mode]?.goal;
- if(fieldGoal&&!targets.includes(fieldGoal))targets.push(fieldGoal);
- const fixedCosts=cost+ship+outShip+tariff;
- box.innerHTML="";
- if(fx<=0||fee>=1){
-  const error=document.createElement("div");error.className="small";error.textContent="計算できません。為替は1円より大きい値、手数料率は100%未満にしてください。";box.appendChild(error);return;
- }
- const intro=document.createElement("div");intro.className="small";intro.textContent="入力した費用を反映した必要な商品販売価格です（USD）。";box.appendChild(intro);
- targets.sort((a,b)=>a-b).forEach(target=>{
-  const raw=((fixedCosts+target)/(fx*(1-fee)))-buyerShip;
-  const price=Math.max(0,Math.ceil(raw*100-1e-8)/100);
-  const estimated=(price+buyerShip)*fx*(1-fee)-fixedCosts;
-  const row=document.createElement("div");row.style.cssText="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #e5e7eb";
-  const left=document.createElement("div");const targetLabel=document.createElement("b");targetLabel.textContent="目標利益 ¥"+target.toLocaleString();left.appendChild(targetLabel);
-  const est=document.createElement("div");est.className="small";est.textContent="逆算後の推定利益 ¥"+Math.floor(estimated).toLocaleString();left.appendChild(est);
-  const right=document.createElement("div");right.style.cssText="text-align:right;white-space:nowrap";const amount=document.createElement("b");amount.style.fontSize="19px";amount.textContent="$"+price.toFixed(2);right.appendChild(amount);
-  const caption=document.createElement("div");caption.className="small";caption.textContent="商品価格";right.appendChild(caption);row.append(left,right);box.appendChild(row);
- });
- const note=document.createElement("div");note.className="small";note.style.marginTop="8px";note.textContent="※未入力の費用は計算に含まれません。実際の手数料・為替差・関税条件も確認してください。";box.appendChild(note);
+  const box=document.getElementById("priceReverse");
+  if(!box)return;
+  const cost=Math.max(0,+val("costJPY")||0);
+  const ship=Math.max(0,+val("shipJPY")||0);
+  const outShip=Math.max(0,+val("outShipJPY")||0);
+  const tariff=Math.max(0,+val("tariffJPY")||0);
+  const buyerShip=Math.max(0,+val("buyerShipUSD")||0);
+  const sale=Math.max(0,+val("saleUSD")||0);
+  const fx=val("fx")===""?150:(+val("fx")||150);
+  const feeRate=val("feeRate")===""?15:Math.max(0,+val("feeRate")||0);
+  const fee=Math.min(feeRate,100)/100;
+  const min=val("minProfit")===""?1000:Math.max(0,+val("minProfit")||0);
+  const modeGoal=fields[mode]?.goal||0;
+  const targetProfit=Math.max(min,modeGoal);
+  const targets=[1000,1500,2000];
+  if(!targets.includes(targetProfit))targets.push(targetProfit);
+  const fixedCosts=cost+ship+outShip+tariff;
+  box.innerHTML="";
+  if(fx<=0||fee>=1){
+   const error=document.createElement("div");error.className="small";error.textContent="計算できません。為替は1円より大きい値、手数料率は100%未満にしてください。";box.appendChild(error);return;
+  }
+  const intro=document.createElement("div");intro.className="small";intro.textContent="現在の販売価格での利益と、目標利益を確保できる仕入れ上限を計算します。";box.appendChild(intro);
+  const summary=document.createElement("div");summary.style.cssText="margin-top:8px;padding:12px;background:#f8fafc;border:1px solid #dbe3ee;border-radius:10px";
+  const heading=document.createElement("div");heading.style.cssText="font-weight:800;margin-bottom:8px";heading.textContent="📌 相場価格での仕入れ判断";summary.appendChild(heading);
+  const addSummaryRow=(label,value,detail)=>{
+   const row=document.createElement("div");row.style.cssText="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #e5e7eb";
+   const left=document.createElement("div");left.style.cssText="min-width:0";const name=document.createElement("div");name.style.fontWeight="600";name.textContent=label;left.appendChild(name);
+   if(detail){const d=document.createElement("div");d.className="small";d.textContent=detail;left.appendChild(d)}
+   const right=document.createElement("b");right.style.cssText="text-align:right;white-space:nowrap";right.textContent=value;row.append(left,right);summary.appendChild(row);
+  };
+  if(sale>0){
+   const marketProfit=(sale+buyerShip)*fx*(1-fee)-fixedCosts;
+   const maxCost=(sale+buyerShip)*fx*(1-fee)-ship-outShip-tariff-targetProfit;
+   addSummaryRow("入力した販売価格","$"+sale.toFixed(2),"購入者送料 $"+buyerShip.toFixed(2)+" は売上に含めて計算");
+   addSummaryRow("相場価格で売れた場合の予想利益","¥"+Math.round(marketProfit).toLocaleString(),"仕入価格・各送料・関税・手数料を反映");
+   addSummaryRow("目標利益 ¥"+Math.round(targetProfit).toLocaleString()+" を守る仕入れ上限",maxCost>=0?"¥"+Math.floor(maxCost).toLocaleString():"¥0以下",maxCost>=0?"商品本体の仕入れ価格の上限。仕入先送料などは差し引き済み":"この販売価格では目標利益を確保できません。販売価格を上げるか費用を下げてください");
+  }else{
+   const hint=document.createElement("div");hint.className="small";hint.style.marginTop="6px";hint.textContent="まず「販売価格（USD）」に、eBayのSold相場を参考にした販売価格を入力してください。";summary.appendChild(hint);
+  }
+  box.appendChild(summary);
+  const subheading=document.createElement("div");subheading.style.cssText="font-weight:800;margin-top:12px";subheading.textContent="🎯 目標利益から販売価格を逆算";box.appendChild(subheading);
+  targets.sort((a,b)=>a-b).forEach(target=>{
+   const raw=((fixedCosts+target)/(fx*(1-fee)))-buyerShip;
+   const price=Math.max(0,Math.ceil(raw*100-1e-8)/100);
+   const estimated=(price+buyerShip)*fx*(1-fee)-fixedCosts;
+   const row=document.createElement("div");row.style.cssText="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #e5e7eb";
+   const left=document.createElement("div");const targetLabel=document.createElement("b");targetLabel.textContent="目標利益 ¥"+target.toLocaleString();left.appendChild(targetLabel);
+   const est=document.createElement("div");est.className="small";est.textContent="逆算後の推定利益 ¥"+Math.floor(estimated).toLocaleString();left.appendChild(est);
+   const right=document.createElement("div");right.style.cssText="text-align:right;white-space:nowrap";const amount=document.createElement("b");amount.style.fontSize="19px";amount.textContent="$"+price.toFixed(2);right.appendChild(amount);
+   const caption=document.createElement("div");caption.className="small";caption.textContent="商品価格";right.appendChild(caption);row.append(left,right);box.appendChild(row);
+  });
+  const note=document.createElement("div");note.className="small";note.style.marginTop="8px";note.textContent="※未入力の費用は計算に含まれません。販売価格はSold相場を参考に設定し、実際の手数料・為替差・関税条件も確認してください。";box.appendChild(note);
 }
 document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
 
