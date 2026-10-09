@@ -339,6 +339,19 @@ function updateJudge(){
 document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
 
 function bindAppEvents(){
+ // 数値欄は初期値が0のとき、入力開始時に0を消して追加入力を防ぐ。
+ // 例：0 → 1 → 10（01にならない）。空欄のまま離れた場合は0に戻す。
+ document.querySelectorAll('input[type="number"]').forEach(input=>{
+   input.addEventListener("focus",()=>{
+     if(input.value==="0") input.value="";
+   });
+   input.addEventListener("blur",()=>{
+     if(input.value.trim()==="") {
+       input.value="0";
+       input.dispatchEvent(new Event("input",{bubbles:true}));
+     }
+   });
+ });
  document.querySelectorAll(".nav button[data-page]").forEach(btn=>{
    btn.addEventListener("click",()=>showPage(btn.dataset.page,btn));
  });
