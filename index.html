@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="5.9">
+<meta name="app-version" content="6.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -43,7 +43,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v5.9</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-10 / v5.7</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v6.0</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-10 / v5.7</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -119,12 +119,25 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
   <div class="field full"><label>候補HS / HTSコード（手入力で保存）</label><input id="hsCode" placeholder="公式検索で確認したコード。未確認なら空欄"></div>
   <div class="field full"><label>確認状況</label><select id="hsStatus"><option value="未確認">未確認</option><option value="候補あり・要確認">候補あり・要確認</option><option value="公式情報を確認">公式情報を確認</option><option value="専門家に確認">専門家に確認</option></select></div>
  </div>
+ <div style="margin-top:10px;padding:10px;border:1px solid #dbeafe;border-radius:10px;background:#eff6ff">
+  <div style="font-weight:700;margin-bottom:6px">⚡ 短い検索語で探す（商品情報をまとめず検索）</div>
+  <div class="small" style="margin-bottom:8px">まずは1語句ずつ検索し、候補の品目説明を比較してください。</div>
+  <div style="display:flex;gap:7px;flex-wrap:wrap">
+   <button class="btn secondary" type="button" onclick="searchHsPreset('key blank')" style="padding:8px 10px;font-size:13px">key blank</button>
+   <button class="btn secondary" type="button" onclick="searchHsPreset('uncut key')" style="padding:8px 10px;font-size:13px">uncut key</button>
+   <button class="btn secondary" type="button" onclick="searchHsPreset('base metal key')" style="padding:8px 10px;font-size:13px">base metal key</button>
+   <button class="btn secondary" type="button" onclick="searchHsPreset('vehicle lock')" style="padding:8px 10px;font-size:13px">vehicle lock</button>
+   <button class="btn secondary" type="button" onclick="searchHsPreset('ignition key')" style="padding:8px 10px;font-size:13px">ignition key</button>
+  </div>
+  <div class="field" style="margin-top:8px"><label>検索語を自由入力（英語）</label><input id="hsSearchTerm" placeholder="例：key blank"></div>
+  <button class="btn primary" type="button" onclick="searchHsPreset()" style="margin-top:7px;padding:10px 12px;font-size:13px">この検索語だけでHTS検索</button>
+ </div>
  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-  <button class="btn primary" type="button" onclick="searchHsCode('hts')" style="padding:10px 12px;font-size:13px">🇺🇸 HTS候補を検索</button>
+  <button class="btn primary" type="button" onclick="searchHsCode('hts')" style="padding:10px 12px;font-size:13px">登録項目をまとめてHTS検索</button>
   <button class="btn secondary" type="button" onclick="searchHsCode('cross')" style="padding:10px 12px;font-size:13px">🔎 税関分類事例</button>
   <button class="btn secondary" type="button" onclick="searchHsCode('jp')" style="padding:10px 12px;font-size:13px">🇯🇵 日本税関事例</button>
  </div>
- <div id="hsSearchStatus" class="small" style="margin-top:8px" aria-live="polite">商品名・用途・材質を入力して検索してください。</div>
+ <div id="hsSearchStatus" class="small" style="margin-top:8px" aria-live="polite">短い検索語ボタンか自由入力を使うと、登録項目を混ぜずに検索できます。</div>
  <div class="small" style="margin-top:7px">⚠️ 商品名だけでコード・税率は確定できません。米国HTSは改訂されるため、公式情報の確認日と適用条件を確認してください。</div>
 </div>
 <div class="field"><label>重量（g）</label><input id="weight" type="number" inputmode="numeric" value="0"></div>
@@ -1681,6 +1694,20 @@ async function refreshExchangeRate(showMessage=false){
 /* =========================
    HS / HTS候補検索リンク
 ========================= */
+function searchHsPreset(term){
+ const input=document.getElementById("hsSearchTerm");
+ const query=String(term!==undefined?term:(input?input.value:"")).trim().replace(/\\s+/g," ");
+ const status=document.getElementById("hsSearchStatus");
+ if(!query){
+  if(status)status.textContent="検索語を入力してください。例：key blank";
+  alert("検索語を入力してください。例：key blank");
+  return;
+ }
+ if(input)input.value=query;
+ if(status)status.textContent="HTS検索語："+query+" ／ この検索では商品名・用途・材質など他の登録項目を追加していません。候補の説明を確認してください。";
+ window.open("https://hts.usitc.gov/search?query="+encodeURIComponent(query),"_blank","noopener");
+}
+
 function searchHsCode(source){
  const englishOnly=value=>String(value||"").normalize("NFKD").replace(/[^\x20-\x7E]/g," ").replace(/\s+/g," ").trim();
  const product=englishOnly(val("product"));
