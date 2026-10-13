@@ -109,13 +109,13 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 <div class="field"><label>海外発送送料原価（円）</label><input id="outShipJPY" type="number" inputmode="numeric" value="0"></div>
 <div class="field full" style="border:1px solid #cbd5e1;border-radius:12px;padding:14px;background:#f8fafc">
  <div style="font-weight:800;font-size:17px;margin-bottom:6px">🚚 SpeedPAK Economy 送料計算（米国本土48州）</div>
- <div class="small" style="margin-bottom:10px">2026年7月30日発効の基本料金表を使用します。燃油等の追加料金は料金表に含まれないため、確認した率を入力してください。未確認なら0%のままにし、基本送料のみの目安として扱います。</div>
+ <div class="small" style="margin-bottom:10px">2026年7月30日発効の基本料金表を使用します。燃油等の追加料金は料金表に含まれないため、確認した率を入力してください。未確認なら空欄にしてください。0%を入力するのは、追加料金率0%を確認できた場合です。空欄のままでは送料・利益判定を暫定扱いにします。</div>
  <div class="grid">
   <div class="field"><label>梱包後の実重量（g）</label><input id="shipWeightG" type="number" min="1" step="1" inputmode="numeric" placeholder="例：35"></div>
   <div class="field"><label>梱包後の長さ（cm）</label><input id="shipLengthCm" type="number" min="0" step="0.1" inputmode="decimal" placeholder="未入力可"></div>
   <div class="field"><label>梱包後の幅（cm）</label><input id="shipWidthCm" type="number" min="0" step="0.1" inputmode="decimal" placeholder="未入力可"></div>
   <div class="field"><label>梱包後の高さ（cm）</label><input id="shipHeightCm" type="number" min="0" step="0.1" inputmode="decimal" placeholder="未入力可"></div>
-  <div class="field"><label>追加料金率（燃油等・%）</label><input id="shipSurchargePct" type="number" min="0" step="0.1" inputmode="decimal" placeholder="未確認なら空欄／0"></div>
+  <div class="field"><label>追加料金率（燃油等・%）</label><input id="shipSurchargePct" type="number" min="0" step="0.1" inputmode="decimal" placeholder="未確認なら空欄／確認済み0%なら0"></div>
   <div class="field"><label>関税率（確認済み・%）</label><input id="shipDutyPct" type="number" min="0" step="0.1" inputmode="decimal" placeholder="未確認なら空欄"></div>
   <div class="field full"><label>申告商品価格（USD・空欄なら販売価格を使用）</label><input id="shipDeclaredUSD" type="number" min="0" step="0.01" inputmode="decimal" placeholder="販売価格を参照"></div>
  </div>
@@ -443,6 +443,9 @@ function updateJudge(){
  const targetProfit=Math.max(min,fields[mode].goal);
  const restriction=val("restriction");
  const returnRisk=val("returnRisk");
+ const shippingSafe=shippingEstimateStatus==="not-used" || shippingEstimateStatus==="entered";
+ if(shippingEstimateApplied && shippingEstimateStatus==="provisional")reasons.push("送料暫定：追加料金率の確認、梱包寸法の入力が必要");
+ if(shippingEstimateStatus==="stale")reasons.push("送料条件変更後：送料を再計算して既存欄へ再反映してください");
  const hasPartNumber=!!val("partNumber").trim();
  const fitmentOK=val("fitment")==="確認済み";
  const marketOK=val("usMarket")!=="不明";
@@ -482,7 +485,7 @@ function updateJudge(){
  const hardStop=restriction==="規制あり" || profit<min ||
    (denominator>0 && sold<3 && sellRate<10);
  const goReady=missing.length===0 && targetOK && demandStrong && rateStrong &&
-   restriction==="問題なし" && returnRisk==="低" && fitmentOKAll;
+   restriction==="問題なし" && returnRisk==="低" && fitmentOKAll && shippingSafe;
 
  let level=goReady?"GO":hardStop?"STOP":"KEEP";
  if(level==="GO")reasons.push("利益・需要・回転率・リスクの主要条件をクリア");
@@ -501,6 +504,7 @@ function updateJudge(){
  <div style="margin:8px 0;padding:10px;border-radius:10px;background:#fff;border:1px solid #dbe3ee"><div class="small">リサーチ優先度（判定スコア ${score}/9）</div><div style="font-size:18px;font-weight:800;margin-top:3px">${priorityInfo.label}</div><div class="small" style="margin-top:3px">${priorityInfo.note}</div></div>
  <div>推定利益：<b>¥${Math.round(profit).toLocaleString()}</b> ／ 目標：¥${Math.round(targetProfit).toLocaleString()}以上<br>回転率目安：<b>${sellRate.toFixed(1)}%</b>（Sold ${sold}件／現在出品 ${active}件）</div>
  <div class="small" style="margin-top:8px;line-height:1.8"><b>判定の理由</b><br>${reasons.length?reasons.join("・"):"主要条件をクリア"}</div>
+ ${shippingEstimateApplied&&shippingEstimateStatus!=="entered"?'<div style="margin-top:8px;padding:10px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-weight:700">⚠️ 送料は暫定です。追加料金率・梱包寸法を確認して再計算するまで、GO判定にはなりません。</div>':""}
  <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">利益の内訳を確認</summary><div class="small" style="margin-top:6px;line-height:1.8">売上（商品価格＋購入者送料）：¥${Math.round(revenue).toLocaleString()}<br>eBay等手数料（${feeRate}%）：−¥${Math.round(ebayFee).toLocaleString()}<br>仕入価格：−¥${Math.round(cost).toLocaleString()}<br>仕入送料：−¥${Math.round(ship).toLocaleString()}<br>海外発送費：−¥${Math.round(outShip).toLocaleString()}<br>セラー負担の関税等：−¥${Math.round(tariff).toLocaleString()}<br>為替設定：1 USD＝${fx}円</div></details>
  <div class="small" style="margin-top:8px">※「仕入れ候補」は自動判定上の候補です。実際の仕入れ前に、Sold期間・送料・関税・規制・適合を最終確認してください。</div>`;
 
@@ -520,6 +524,8 @@ const speedPakEconomyUSRates = [
  [24,37421],[24.5,38077],[25,38625]
 ];
 let lastShippingEstimate = null;
+let shippingEstimateApplied = false;
+let shippingEstimateStatus = "not-used";
 function calculateShippingEstimate(){
  const result=document.getElementById("shipCalcResult");
  const actualG=Number(document.getElementById("shipWeightG").value);
@@ -538,6 +544,9 @@ function calculateShippingEstimate(){
  const dimensionsEntered=l>0&&w>0&&h>0;
  const volumetricKg=dimensionsEntered?(l*w*h/8000):0;
  const billableKg=Math.max(actualKg,volumetricKg);
+ if(dimensionsEntered && (l>66 || l+2*(w+h)>274)){
+  result.textContent="サイズ制限超過：米国本土向けSpeedPAK Economyは長さ66cm以下、長さ＋2×（幅＋高さ）274cm以下が条件です。寸法を見直してください。";lastShippingEstimate=null;return;
+ }
  if(billableKg>25){
   result.textContent="請求重量が25kgを超えています。この計算機の対象外です。";lastShippingEstimate=null;return;
  }
@@ -551,34 +560,38 @@ function calculateShippingEstimate(){
  const declaredUSD=declaredRaw===""?(Number(val("saleUSD"))||0):Math.max(0,Number(declaredRaw)||0);
  const dutyRateEntered=dutyRaw!=="";
  const dutyRate=dutyRateEntered?Math.max(0,Number(dutyRaw)||0):null;
+ const surchargeConfirmed=surchargeRaw!=="" && Number.isFinite(Number(surchargeRaw)) && Number(surchargeRaw)>=0;
+ const isProvisional=!surchargeConfirmed || !dimensionsEntered;
  const dutyJPY=dutyRateEntered?Math.ceil(declaredUSD*fx*dutyRate/100):null;
  const currentDuty=Math.max(0,Number(val("tariffJPY"))||0);
  const dutyToCover=dutyRateEntered?dutyJPY:currentDuty;
  const buyerShipUSD=(shippingCost+dutyToCover)/(fx*(1-feePct/100));
- lastShippingEstimate={actualG,actualKg,volumetricKg,billableKg,bracketKg:bracket[0],base, surchargePct,shippingCost,declaredUSD,dutyRateEntered,dutyJPY,dutyToCover,buyerShipUSD,fx,feePct};
+ lastShippingEstimate={actualG,actualKg,volumetricKg,billableKg,bracketKg:bracket[0],base,surchargePct,surchargeConfirmed,dimensionsEntered,isProvisional,shippingCost,declaredUSD,dutyRateEntered,dutyJPY,dutyToCover,buyerShipUSD,fx,feePct};
  const lines=[
   "請求重量の目安："+billableKg.toFixed(3)+"kg（料金区分 "+bracket[0].toFixed(1)+"kg）",
   "基本送料：¥"+base.toLocaleString("ja-JP"),
-  "追加料金："+(surchargeRaw===""?"未確認（0%で仮計算）":surchargePct+"%")+" → 送料原価目安 ¥"+shippingCost.toLocaleString("ja-JP"),
-  dimensionsEntered?"容積重量："+volumetricKg.toFixed(3)+"kg":"容積重量：寸法未入力のため実重量のみ",
+  "追加料金："+(!surchargeConfirmed?"未確認（0%で仮計算）":surchargePct+"%（入力済み）")+" → 送料原価目安 ¥"+shippingCost.toLocaleString("ja-JP"),
+  dimensionsEntered?"容積重量："+volumetricKg.toFixed(3)+"kg":"容積重量：寸法未入力のため実重量のみ（送料は暫定）",
   dutyRateEntered?"関税目安：¥"+dutyJPY.toLocaleString("ja-JP")+"（申告価格 $"+declaredUSD.toFixed(2)+" × "+dutyRate+"%）":("関税：率未入力。既存欄の金額"+(currentDuty>0?" ¥"+currentDuty.toLocaleString("ja-JP")+"を維持":"を未確定")+"。関税0円とは判断しません。"),
   "購入者送料の目安：$"+buyerShipUSD.toFixed(2)+"（送料原価"+(dutyToCover>0?"＋関税":"")+"を手数料率 "+feePct+"% 考慮して逆算）"
  ];
  result.innerHTML="";
  lines.forEach((line,i)=>{const d=document.createElement("div");d.textContent=line;d.style.margin=i===0?"0 0 5px":"5px 0 0";if(i===0)d.style.fontWeight="800";result.appendChild(d);});
- const note=document.createElement("div");note.className="small";note.style.marginTop="8px";note.textContent="※基本料金は2026年7月30日発効の米国本土48州向け表。燃油等の実額は別途確認が必要です。料金表にない追加料金率を入力しない場合、結果は基本送料のみの暫定値です。";result.appendChild(note);
+ const note=document.createElement("div");note.className="small";note.style.marginTop="8px";note.textContent="※基本料金は2026年7月30日発効の米国本土48州向け表。サイズ条件：長さ66cm以下、長さ＋2×（幅＋高さ）274cm以下。追加料金率が空欄、または寸法が未入力の場合は暫定値です。入力済みでも実請求額はOrange Connexの請求書を優先してください。";result.appendChild(note);
 }
 function applyShippingEstimate(){
  calculateShippingEstimate();
  if(!lastShippingEstimate)return;
  const e=lastShippingEstimate;
+ shippingEstimateApplied=true;
+ shippingEstimateStatus=e.isProvisional?"provisional":"entered";
  document.getElementById("outShipJPY").value=String(e.shippingCost);
  if(e.dutyRateEntered)document.getElementById("tariffJPY").value=String(e.dutyJPY);
  document.getElementById("buyerShipUSD").value=e.buyerShipUSD.toFixed(2);
  if(typeof updateJudge==="function")updateJudge();
  if(typeof updateReversePrice==="function")updateReversePrice();
  const result=document.getElementById("shipCalcResult");
- const saved=document.createElement("div");saved.style.cssText="margin-top:8px;font-weight:800;color:#047857";saved.textContent="計算結果を既存の入力欄へ反映しました。履歴への保存は通常の「保存」操作で行ってください。";result.appendChild(saved);
+ const saved=document.createElement("div");saved.style.cssText="margin-top:8px;font-weight:800;color:"+(e.isProvisional?"#b45309":"#047857");saved.textContent=e.isProvisional?"送料の暫定値を反映しました。追加料金率を確認し、寸法をすべて入力してから再計算・再反映してください。判定は暫定扱いです。":"入力条件を反映しました。実請求額はOrange Connexの請求書を優先してください。履歴への保存は通常の「保存」操作で行ってください。";result.appendChild(saved);
 }
 
 function updateReversePrice(){
@@ -643,7 +656,17 @@ function updateReversePrice(){
   });
   const note=document.createElement("div");note.className="small";note.style.marginTop="8px";note.textContent="※未入力の費用は計算に含まれません。販売価格はSold相場を参考に設定し、実際の手数料・為替差・関税条件も確認してください。";box.appendChild(note);
 }
-document.addEventListener("input",e=>{if(e.target.closest("#register"))updateJudge()});
+document.addEventListener("input",e=>{
+ if(e.target.closest("#register")){
+  if(["shipWeightG","shipLengthCm","shipWidthCm","shipHeightCm","shipSurchargePct","shipDutyPct","shipDeclaredUSD"].includes(e.target.id) && shippingEstimateApplied){
+   shippingEstimateApplied=false;
+   shippingEstimateStatus="stale";
+   const result=document.getElementById("shipCalcResult");
+   if(result){const warning=document.createElement("div");warning.style.cssText="margin-top:8px;color:#b45309;font-weight:800";warning.textContent="送料条件が変更されました。利益判定へ反映するには「送料を計算」→「計算結果を既存欄へ反映」を再実行してください。";result.appendChild(warning);}
+  }
+  updateJudge();
+ }
+});
 
 function getChecklistValues(){
  const ids=["checkSold","checkCompetition","checkPrice","checkCosts","checkRestriction","checkItem","checkReturns"];
@@ -757,6 +780,15 @@ function saveItem(){
     ship:+val("shipJPY"),
     outShip:+val("outShipJPY"),
     tariff:+val("tariffJPY"),
+    shipWeightG:val("shipWeightG")===""?null:Number(val("shipWeightG")),
+    shipLengthCm:val("shipLengthCm")===""?null:Number(val("shipLengthCm")),
+    shipWidthCm:val("shipWidthCm")===""?null:Number(val("shipWidthCm")),
+    shipHeightCm:val("shipHeightCm")===""?null:Number(val("shipHeightCm")),
+    shipSurchargePct:val("shipSurchargePct")===""?null:Number(val("shipSurchargePct")),
+    shipDutyPct:val("shipDutyPct")===""?null:Number(val("shipDutyPct")),
+    shipDeclaredUSD:val("shipDeclaredUSD")===""?null:Number(val("shipDeclaredUSD")),
+    shippingEstimateApplied,
+    shippingEstimateStatus,
     hsUse:val("hsUse").trim(),
     hsMaterial:val("hsMaterial").trim(),
     hsOrigin:val("hsOrigin"),
@@ -1203,6 +1235,15 @@ function editItem(index){
   setVal("shipJPY",x.ship);
   setVal("outShipJPY",x.outShip);
   setVal("tariffJPY",x.tariff);
+  setVal("shipWeightG",x.shipWeightG??"");
+  setVal("shipLengthCm",x.shipLengthCm??"");
+  setVal("shipWidthCm",x.shipWidthCm??"");
+  setVal("shipHeightCm",x.shipHeightCm??"");
+  setVal("shipSurchargePct",x.shipSurchargePct??"");
+  setVal("shipDutyPct",x.shipDutyPct??"");
+  setVal("shipDeclaredUSD",x.shipDeclaredUSD??"");
+  shippingEstimateApplied=!!x.shippingEstimateApplied;
+  shippingEstimateStatus=x.shippingEstimateStatus||"not-used";
   setVal("hsUse",x.hsUse||"");
   setVal("hsMaterial",x.hsMaterial||"");
   setVal("hsOrigin",x.hsOrigin||"Japan");
@@ -1243,6 +1284,7 @@ function editItem(index){
     "minProfit",
     x.minProfit===undefined?1000:x.minProfit
   );
+  if(Number(x.shipWeightG)>0)calculateShippingEstimate();
 
 
   /* 車両・部品情報 */
