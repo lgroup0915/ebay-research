@@ -43,7 +43,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v6.2</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-13 / v6.2</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v6.3</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-13 / v6.3</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -255,7 +255,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v6.2";
+const APP_VERSION="v6.3";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -444,12 +444,12 @@ function updateJudge(){
  const restriction=val("restriction");
  const returnRisk=val("returnRisk");
  const shippingSafe=shippingEstimateStatus==="not-used" || shippingEstimateStatus==="entered";
- if(shippingEstimateApplied && shippingEstimateStatus==="provisional")reasons.push("送料暫定：追加料金率の確認、梱包寸法の入力が必要");
- if(shippingEstimateStatus==="stale")reasons.push("送料条件変更後：送料を再計算して既存欄へ再反映してください");
  const hasPartNumber=!!val("partNumber").trim();
  const fitmentOK=val("fitment")==="確認済み";
  const marketOK=val("usMarket")!=="不明";
  let score=0,reasons=[];
+ if(shippingEstimateApplied && shippingEstimateStatus==="provisional")reasons.push("送料暫定：追加料金率の確認、梱包寸法の入力が必要");
+ if(shippingEstimateStatus==="stale")reasons.push("送料条件変更後：送料を再計算して既存欄へ再反映してください");
 
  // まずデータ不足を見える化。未入力を「問題なし」と誤判定しない。
  const missing=[];
