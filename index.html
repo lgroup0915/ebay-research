@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<meta name="app-version" content="6.3">
+<meta name="app-version" content="6.4">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>eBay Research Hub</title>
@@ -43,7 +43,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v6.3</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-13 / v6.3</div></header>
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v6.4</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-13 / v6.3</div></header>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -255,7 +255,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v6.3";
+const APP_VERSION="v6.4";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -561,10 +561,12 @@ function calculateShippingEstimate(){
  const dutyRateEntered=dutyRaw!=="";
  const dutyRate=dutyRateEntered?Math.max(0,Number(dutyRaw)||0):null;
  const surchargeConfirmed=surchargeRaw!=="" && Number.isFinite(Number(surchargeRaw)) && Number(surchargeRaw)>=0;
- const isProvisional=!surchargeConfirmed || !dimensionsEntered;
  const dutyJPY=dutyRateEntered?Math.ceil(declaredUSD*fx*dutyRate/100):null;
  const currentDuty=Math.max(0,Number(val("tariffJPY"))||0);
  const dutyToCover=dutyRateEntered?dutyJPY:currentDuty;
+ // 関税率未入力かつ既存の関税額も0円なら、関税未確認として暫定扱いにする。
+ const dutyUnconfirmed=!dutyRateEntered && currentDuty<=0;
+ const isProvisional=!surchargeConfirmed || !dimensionsEntered || dutyUnconfirmed;
  const buyerShipUSD=(shippingCost+dutyToCover)/(fx*(1-feePct/100));
  lastShippingEstimate={actualG,actualKg,volumetricKg,billableKg,bracketKg:bracket[0],base,surchargePct,surchargeConfirmed,dimensionsEntered,isProvisional,shippingCost,declaredUSD,dutyRateEntered,dutyJPY,dutyToCover,buyerShipUSD,fx,feePct};
  const lines=[
@@ -572,12 +574,12 @@ function calculateShippingEstimate(){
   "基本送料：¥"+base.toLocaleString("ja-JP"),
   "追加料金："+(!surchargeConfirmed?"未確認（0%で仮計算）":surchargePct+"%（入力済み）")+" → 送料原価目安 ¥"+shippingCost.toLocaleString("ja-JP"),
   dimensionsEntered?"容積重量："+volumetricKg.toFixed(3)+"kg":"容積重量：寸法未入力のため実重量のみ（送料は暫定）",
-  dutyRateEntered?"関税目安：¥"+dutyJPY.toLocaleString("ja-JP")+"（申告価格 $"+declaredUSD.toFixed(2)+" × "+dutyRate+"%）":("関税：率未入力。既存欄の金額"+(currentDuty>0?" ¥"+currentDuty.toLocaleString("ja-JP")+"を維持":"を未確定")+"。関税0円とは判断しません。"),
+  dutyRateEntered?"関税の簡易試算：¥"+dutyJPY.toLocaleString("ja-JP")+"（申告価格 $"+declaredUSD.toFixed(2)+" × 入力率 "+dutyRate+"%）※確定税額ではありません":("関税：率未入力。既存欄の金額"+(currentDuty>0?" ¥"+currentDuty.toLocaleString("ja-JP")+"を送料に含めて試算":"は0円のため未計上")+"。関税0円とは判断しません。"),
   "購入者送料の目安：$"+buyerShipUSD.toFixed(2)+"（送料原価"+(dutyToCover>0?"＋関税":"")+"を手数料率 "+feePct+"% 考慮して逆算）"
  ];
  result.innerHTML="";
  lines.forEach((line,i)=>{const d=document.createElement("div");d.textContent=line;d.style.margin=i===0?"0 0 5px":"5px 0 0";if(i===0)d.style.fontWeight="800";result.appendChild(d);});
- const note=document.createElement("div");note.className="small";note.style.marginTop="8px";note.textContent="※基本料金は2026年7月30日発効の米国本土48州向け表。サイズ条件：長さ66cm以下、長さ＋2×（幅＋高さ）274cm以下。追加料金率が空欄、または寸法が未入力の場合は暫定値です。入力済みでも実請求額はOrange Connexの請求書を優先してください。";result.appendChild(note);
+ const note=document.createElement("div");note.className="small";note.style.marginTop="8px";note.textContent="※基本料金は2026年7月30日発効の米国本土48州向け表。サイズ条件：長さ66cm以下、長さ＋2×（幅＋高さ）274cm以下。追加料金率・寸法・関税条件のいずれかが未確認なら暫定値です。入力した関税率による掛け算は簡易試算であり、実際の関税はHTSコード・原産国・申告価格・追加関税等で変わります。実請求額はOrange Connexの請求書を優先してください。";result.appendChild(note);
 }
 function applyShippingEstimate(){
  calculateShippingEstimate();
