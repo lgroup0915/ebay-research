@@ -228,7 +228,16 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </section>
 
 <section id="history" class="hidden"><div class="card"><h2>📋 履歴・仕入れ候補一覧</h2><p class="small">候補を絞り込み、予想利益・仕入れ上限・上限との差額を比較できます。仕入れ上限は商品本体価格の目安です。</p><div class="field"><label for="historyFilter">表示する判断ステージ</label><select id="historyFilter"><option value="all">すべて表示</option><option value="candidate">① 仕入れ候補のみ</option><option value="research">② 追加調査のみ</option><option value="skip">③ 見送り・後回しのみ</option></select></div><div id="historySummary" class="small" style="margin:10px 0;font-weight:700" aria-live="polite"></div><div class="small" style="padding:10px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:10px">🏆 優先順位スコア：需要35点＋利益30点＋資金効率20点＋リスク確認15点＝100点。登録したSold数・出品数・費用・リスク項目からの目安です。Soldの調査期間や市場の変化も必ず確認してください。</div><div class="card" style="margin:12px 0;background:#f8fafc"><h3 style="margin-top:0">💴 仕入れ予算シミュレーション</h3><p class="small">①仕入れ候補に登録した商品から選択し、購入数を指定してください。仕入れ資金は商品代＋仕入先送料で計算します。販売後の予想利益は登録時の利益見積りを使用します。</p><div class="grid"><div class="field"><label for="budgetAmount">使える仕入れ予算（円）</label><input id="budgetAmount" type="number" min="0" step="1000" value="30000"></div><div class="field"><label for="budgetReserve">予備資金として残す額（円）</label><input id="budgetReserve" type="number" min="0" step="1000" value="3000"></div></div><div id="budgetSummary" aria-live="polite"></div><button class="btn secondary" type="button" style="width:100%;margin:8px 0" onclick="autoAllocateBudget()">🏆 ランキング上位から予算内で自動選択</button><div class="small">自動選択は候補を1個ずつ優先順位順に仮選択します。購入確定ではありません。数量はあとから変更できます。</div><div id="budgetCandidates"></div></div><div id="historyList"></div></div></section>
-<section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v5.7</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
+<div class="card" id="firebaseCloudPanel">
+<h2>☁️ クラウド共有（試験運用）</h2>
+<p class="small">スマホ・PC間でデータを共有するための設定です。初回はログイン後、端末内データとクラウドデータを確認してから操作してください。</p>
+<div class="field"><label for="fbEmail">Firebase登録メールアドレス</label><input id="fbEmail" type="email" autocomplete="username" placeholder="登録したメールアドレス"></div>
+<div class="field"><label for="fbPassword">パスワード</label><input id="fbPassword" type="password" autocomplete="current-password" placeholder="Firebaseで設定したパスワード"></div>
+<div class="grid"><button class="btn primary" type="button" id="fbSignIn">ログイン</button><button class="btn secondary" type="button" id="fbSignOut">ログアウト</button></div>
+<div id="fbCloudStatus" class="small" role="status" aria-live="polite" style="margin:10px 0;padding:10px;border:1px solid #64748b;border-radius:8px">Firebase未接続。まずログインしてください。</div>
+<div class="grid"><button class="btn primary" type="button" id="fbUpload">端末データをクラウドへ保存</button><button class="btn secondary" type="button" id="fbDownload">クラウドデータを端末へ読込</button></div>
+<p class="small">※「クラウドへ保存」はクラウド側を端末データで置き換えます。「読込」はこの端末の保存データを置き換えます。実行前にJSONバックアップを保管してください。自動同期ではなく、ボタンで明示的に操作します。</p>
+</div><section id="settings" class="hidden"><div class="card"><h2>⚙️ アプリ情報</h2><div class="small">現在のバージョン</div><div style="font-size:22px;font-weight:800;margin-top:4px">v5.7</div></div><div class="card"><h2>⚙️ 判定設定</h2><p class="small">現在は商品登録画面で手数料率・最低利益を変更できます。今後、分野別に保存できるようにします。</p><div class="result keep">🎯 個人運用の基本目標<br>月5万円 → 1年後は月20万円を安定継続<br>発送上限：月30個／軽量・小型を優先</div></div></section>
 </main>
 
 <div id="detailModal" class="modal hidden" onclick="closeDetail(event)">
@@ -1893,5 +1902,131 @@ showPage("home",document.querySelector('.nav button[data-page="home"]'));
 refreshExchangeRate(false);
 setInterval(()=>{if(document.visibilityState==="visible")refreshExchangeRate(false);},30*60*1000);
 </script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBn8W2vye5HDGZMH2QibkQc_vjdpaIwBZs",
+  authDomain: "ebay-research-hub.firebaseapp.com",
+  projectId: "ebay-research-hub",
+  storageBucket: "ebay-research-hub.firebasestorage.app",
+  messagingSenderId: "746863566200",
+  appId: "1:746863566200:web:a9732c38bb46b219803c8d"
+};
+
+const fbStatus = document.getElementById("fbCloudStatus");
+const fbEmail = document.getElementById("fbEmail");
+const fbPassword = document.getElementById("fbPassword");
+const fbSignIn = document.getElementById("fbSignIn");
+const fbSignOut = document.getElementById("fbSignOut");
+const fbUpload = document.getElementById("fbUpload");
+const fbDownload = document.getElementById("fbDownload");
+let fbUser = null;
+let cloudHasData = false;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const dataKeys = ["ebayItems", "ebayMode", "ebayBudgetSettings", "ebayFxRate", "ebayFxUpdated"];
+
+function fbSetStatus(message) {
+  if (fbStatus) fbStatus.textContent = message;
+}
+function localSnapshot() {
+  const data = {};
+  for (const key of dataKeys) {
+    const value = localStorage.getItem(key);
+    if (value !== null) data[key] = value;
+  }
+  return data;
+}
+function cloudDocRef() {
+  if (!fbUser) throw new Error("先にログインしてください。");
+  return doc(db, "users", fbUser.uid);
+}
+async function inspectCloud() {
+  if (!fbUser) return;
+  fbSetStatus("ログイン済み。クラウドデータを確認中…");
+  try {
+    const snap = await getDoc(cloudDocRef());
+    cloudHasData = snap.exists() && !!snap.data().data;
+    if (cloudHasData) {
+      const updated = snap.data().updatedAt?.toDate?.();
+      fbSetStatus("ログイン済み。クラウドデータがあります。更新日時：" + (updated ? updated.toLocaleString("ja-JP") : "不明") + "。内容を確認してから「読込」または「クラウドへ保存」を選んでください。");
+    } else {
+      fbSetStatus("ログイン済み。クラウドデータはまだありません。端末データを確認し、JSONバックアップ後に「端末データをクラウドへ保存」を選べます。");
+    }
+  } catch (error) {
+    console.error("Firebase cloud check failed", error);
+    fbSetStatus("クラウド確認に失敗しました。Firestoreのルール設定を確認してください。データは変更していません。");
+  }
+}
+fbSignIn?.addEventListener("click", async () => {
+  const email = fbEmail?.value.trim();
+  const password = fbPassword?.value;
+  if (!email || !password) { fbSetStatus("メールアドレスとパスワードを入力してください。"); return; }
+  fbSignIn.disabled = true;
+  fbSetStatus("ログイン中…");
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    if (fbPassword) fbPassword.value = "";
+    await inspectCloud();
+  } catch (error) {
+    console.error("Firebase sign-in failed", error);
+    fbSetStatus("ログインできませんでした。メールアドレス・パスワード、Authenticationの登録状態を確認してください。");
+  } finally { fbSignIn.disabled = false; }
+});
+fbSignOut?.addEventListener("click", async () => {
+  try { await signOut(auth); fbSetStatus("ログアウトしました。端末内データは変更していません。"); }
+  catch (error) { console.error(error); fbSetStatus("ログアウトに失敗しました。"); }
+});
+fbUpload?.addEventListener("click", async () => {
+  if (!fbUser) { fbSetStatus("先にログインしてください。"); return; }
+  const local = localSnapshot();
+  if (!local.ebayItems) { fbSetStatus("端末内にリサーチデータが見つかりません。誤った空データの保存を防ぐため中止しました。"); return; }
+  const confirmText = cloudHasData
+    ? "クラウドに保存済みのデータを、この端末の保存データで置き換えます。先にJSONバックアップを確認しましたか？"
+    : "この端末の保存データを初めてクラウドへ保存します。先にJSONバックアップを保管しましたか？";
+  if (!window.confirm(confirmText)) return;
+  fbUpload.disabled = true;
+  try {
+    await setDoc(cloudDocRef(), { data: local, updatedAt: serverTimestamp(), schemaVersion: 1 });
+    cloudHasData = true;
+    fbSetStatus("クラウドへ保存しました。対象キー：" + Object.keys(local).join(", ") + "。別の端末でログインし、クラウドデータを確認してから読込できます。");
+  } catch (error) {
+    console.error("Firebase cloud upload failed", error);
+    fbSetStatus("クラウド保存に失敗しました。Firestoreのルール設定・通信を確認してください。端末データは変更していません。");
+  } finally { fbUpload.disabled = false; }
+});
+fbDownload?.addEventListener("click", async () => {
+  if (!fbUser) { fbSetStatus("先にログインしてください。"); return; }
+  if (!window.confirm("クラウドデータで、この端末のリサーチデータと設定を置き換えます。先に現在の端末データをJSON書出でバックアップしましたか？")) return;
+  fbDownload.disabled = true;
+  try {
+    const snap = await getDoc(cloudDocRef());
+    if (!snap.exists() || !snap.data().data || typeof snap.data().data !== "object") {
+      fbSetStatus("クラウドデータがありません。端末データは変更していません。"); return;
+    }
+    const cloudData = snap.data().data;
+    for (const key of dataKeys) {
+      if (Object.prototype.hasOwnProperty.call(cloudData, key) && typeof cloudData[key] === "string") localStorage.setItem(key, cloudData[key]);
+      else localStorage.removeItem(key);
+    }
+    fbSetStatus("クラウドデータを端末へ読み込みました。画面を再読み込みして反映してください。");
+    if (window.confirm("読込が完了しました。アプリを再読み込みしますか？")) window.location.reload();
+  } catch (error) {
+    console.error("Firebase cloud download failed", error);
+    fbSetStatus("クラウド読込に失敗しました。Firestoreのルール設定・通信を確認してください。端末データは変更していません。");
+  } finally { fbDownload.disabled = false; }
+});
+onAuthStateChanged(auth, async (user) => {
+  fbUser = user;
+  if (user) await inspectCloud();
+  else { cloudHasData = false; fbSetStatus("Firebase未接続。メールアドレスとパスワードでログインしてください。"); }
+});
+</script>
+
 </body>
 </html>
