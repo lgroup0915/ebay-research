@@ -40,10 +40,36 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 @media(max-width:520px){.detail-grid{grid-template-columns:1fr}}
 
 @media(max-width:520px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.metrics{grid-template-columns:1fr 1fr}.specialties{grid-template-columns:1fr}.btnrow{grid-template-columns:1fr}}
+
+.auth-gate{max-width:460px;margin:7vh auto;padding:22px;background:#fff;border:1px solid #dce2ea;border-radius:16px;box-shadow:0 8px 28px rgba(15,23,42,.08)}
+.auth-gate h2{margin:0 0 8px}.auth-gate .small{color:#667085;line-height:1.6}
+.auth-gate label{display:block;font-weight:700;font-size:14px;margin:14px 0 6px}
+.auth-gate input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:9px;font:inherit}
+.auth-gate button{width:100%;padding:12px;border:0;border-radius:9px;background:#2563eb;color:#fff;font-weight:800;margin-top:14px}
+.auth-gate button:disabled{opacity:.55}
+.auth-message{margin-top:12px;font-size:13px;line-height:1.5;white-space:pre-wrap}
+.auth-account{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:0 14px 10px;font-size:12px;color:#64748b}
+.auth-account button{border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:6px 10px;color:#334155}
+#appShell{display:none}
+@media(max-width:520px){.auth-gate{margin:4vh 12px;padding:18px}}
 </style>
 </head>
 <body>
-<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v6.5</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-14 / v6.5</div></header>
+<section id="authGate" class="auth-gate">
+  <h2>🔐 eBay Research Hub ログイン</h2>
+  <p class="small">登録済みのメールアドレスとパスワードでログインしてください。ログイン前はアプリ画面を表示しません。</p>
+  <form id="authLoginForm">
+    <label for="authEmail">メールアドレス</label>
+    <input id="authEmail" type="email" autocomplete="username" required>
+    <label for="authPassword">パスワード</label>
+    <input id="authPassword" type="password" autocomplete="current-password" required>
+    <button id="authLoginButton" type="submit">ログイン</button>
+  </form>
+  <div id="authMessage" class="auth-message" role="status" aria-live="polite"></div>
+</section>
+<div id="appShell">
+<header><h1>eBay Research Hub</h1><div class="sub">専門分野リサーチ・利益管理 v6.6 Auth Stage 1</div><div style="margin-top:6px;font-size:11px;opacity:.7">BUILD 2026-10-15 / v6.6-auth-stage1</div></header>
+<div class="auth-account"><span id="authUserLabel"></span><button type="button" id="authSignOutButton">ログアウト</button></div>
 <main>
 <div class="nav">
 <button type="button" class="active" data-page="home">🏠 ホーム</button>
@@ -242,6 +268,7 @@ main{max-width:760px;margin:auto;padding:16px 14px 90px}.nav{display:flex;gap:8p
 </div>
 
 <div class="bottom"><button onclick="exportData()">💾 データ書出</button><button onclick="importData()">📥 読込</button></div>
+</div><!-- /appShell -->
 
 <script>
 const fields={
@@ -255,7 +282,7 @@ okinawa:{name:"🌺 沖縄文化",keys:["Okinawa Japan","Ryukyu","Okinawa tradit
 japan:{name:"🎎 日本文化",keys:["Japanese traditional","Made in Japan","Japanese festival","Japanese craft"],goal:1200},
 misc:{name:"📦 雑多",keys:["Japanese made","vintage Japan","Japan exclusive"],goal:1000}
 };
-const APP_VERSION="v6.5";
+const APP_VERSION="v6.6-auth-stage1";
 let editingId=null;
 let mode=localStorage.getItem("ebayMode")||"motors";if(!fields[mode]) mode="motors";
 let items=[];
@@ -1892,6 +1919,83 @@ syncMode();
 showPage("home",document.querySelector('.nav button[data-page="home"]'));
 refreshExchangeRate(false);
 setInterval(()=>{if(document.visibilityState==="visible")refreshExchangeRate(false);},30*60*1000);
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBn8W2vye5HDGZMH2QibkQc_vjdpaIwBZs",
+  authDomain: "ebay-research-hub.firebaseapp.com",
+  projectId: "ebay-research-hub",
+  storageBucket: "ebay-research-hub.firebasestorage.app",
+  messagingSenderId: "746863566200",
+  appId: "1:746863566200:web:a9732c38bb46b219803c8d"
+};
+
+const authApp = initializeApp(firebaseConfig);
+const auth = getAuth(authApp);
+const gate = document.getElementById("authGate");
+const shell = document.getElementById("appShell");
+const form = document.getElementById("authLoginForm");
+const emailInput = document.getElementById("authEmail");
+const passwordInput = document.getElementById("authPassword");
+const loginButton = document.getElementById("authLoginButton");
+const message = document.getElementById("authMessage");
+const userLabel = document.getElementById("authUserLabel");
+const signOutButton = document.getElementById("authSignOutButton");
+
+function setMessage(text, isError = false) {
+  message.textContent = text;
+  message.style.color = isError ? "#b42318" : "#475467";
+}
+function friendlyAuthError(error) {
+  const code = error && error.code ? error.code : "";
+  if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") return "メールアドレスまたはパスワードを確認してください。";
+  if (code === "auth/too-many-requests") return "試行回数が多すぎます。少し時間をおいてから再度お試しください。";
+  if (code === "auth/network-request-failed") return "通信に失敗しました。ネット接続を確認してください。";
+  if (code === "auth/invalid-email") return "メールアドレスの形式を確認してください。";
+  return "ログインできませんでした。入力内容とFirebase Authenticationの設定を確認してください。";
+}
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  loginButton.disabled = true;
+  setMessage("ログインしています…");
+  try {
+    await signInWithEmailAndPassword(auth, emailInput.value.trim(), passwordInput.value);
+    passwordInput.value = "";
+    setMessage("");
+  } catch (error) {
+    console.error("Firebase sign-in failed:", error);
+    setMessage(friendlyAuthError(error), true);
+  } finally {
+    loginButton.disabled = false;
+  }
+});
+signOutButton.addEventListener("click", async () => {
+  signOutButton.disabled = true;
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error("Firebase sign-out failed:", error);
+    alert("ログアウトに失敗しました。通信状態を確認してください。");
+  } finally {
+    signOutButton.disabled = false;
+  }
+});
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    gate.style.display = "none";
+    shell.style.display = "block";
+    userLabel.textContent = user.email || "ログイン中";
+    setMessage("");
+  } else {
+    shell.style.display = "none";
+    gate.style.display = "block";
+    userLabel.textContent = "";
+    passwordInput.value = "";
+  }
+});
 </script>
 </body>
 </html>
